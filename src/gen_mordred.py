@@ -35,7 +35,7 @@ DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2 (current)')
 t = datetime.now()
 t = [t.year, '-', t.month, '-', t.day]
 date = ''.join( [str(i) for i in t] )
-OUTDIR = Path( filepath, '../data/processed/features/BL2/', date )
+OUTDIR = Path( filepath, '../data/processed/BL2/', date )
 
 # SMILES
 in_fname = 'BL2.smi'
@@ -43,7 +43,7 @@ SMILES_PATH = str( DATADIR/in_fname )
 
 
 def parse_args(args):
-    parser = argparse.ArgumentParser(description='Generate molecular feature dataframe.')
+    parser = argparse.ArgumentParser(description='Generate molecular feature dataframes.')
     parser.add_argument('--smiles_path', default=SMILES_PATH, type=str,
                         help=f'Full path to the smiles file (default: {SMILES_PATH}).')
     parser.add_argument('--par_jobs', default=1, type=int, 
