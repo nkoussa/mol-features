@@ -70,6 +70,7 @@ def fps_single_smile(smi, radius=2, nbits=2048):
 
 def smiles_to_fps(df, smi_name='smiles', radius=2, nbits=2048, par_jobs=8):
     """ Generate dataframe of fingerprints from smiles. """
+    df = df.reset_index(drop=True)
     res = Parallel(n_jobs=par_jobs, verbose=1)(
             delayed(fps_single_smile)(smi, radius=radius, nbits=nbits) for smi in df[smi_name].tolist())
     # fps_list = [dct['fps'] for dct in res]
@@ -85,6 +86,7 @@ def smiles_to_mordred(df, smi_name='smiles', ignore_3D=True, par_jobs=8):
     """ Generate dataframe of Mordred descriptors from smiles. """
     from rdkit import Chem
     from mordred import Calculator, descriptors
+    df = df.reset_index(drop=True)
 
     # Create Mordred calculator and convert smiles to mols
     calc = Calculator(descriptors, ignore_3D=ignore_3D)

@@ -29,16 +29,19 @@ from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps
 # from smiles import canon_smiles, smiles_to_mordred
 
 # DATADIR
-DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2 (current)')
+# DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2 (current)')
+DATADIR = Path(filepath, '../data/raw/UC-molecules')
 
 # OUTDIR
 t = datetime.now()
 t = [t.year, '-', t.month, '-', t.day]
 date = ''.join( [str(i) for i in t] )
-OUTDIR = Path( filepath, '../data/processed/BL2/', date )
+# OUTDIR = Path( filepath, '../data/processed/BL2/', date )
+OUTDIR = Path( filepath, '../data/processed/UC-molecules/', date )
 
 # SMILES
-in_fname = 'BL2.smi'
+# in_fname = 'BL2.smi'
+in_fname = 'UC.smi'
 SMILES_PATH = str( DATADIR/in_fname )
 
 
@@ -67,6 +70,7 @@ def run(args):
     print('\nLoad smiles ...')
     smiles_path = Path(args['smiles_path'])
     smi = pd.read_csv( smiles_path, sep='\t', names=['smiles', 'name'] )
+    smi['smiles'] = smi['smiles'].map(lambda x: x.strip())
     fname = smiles_path.with_suffix('').name
     n_smiles = smi.shape[0]
     fea_id0 = smi.shape[1] # this used as index where features begin
@@ -92,7 +96,7 @@ def run(args):
     # Remove duplicates
     print_fn('\nDrop duplicates from smiles ...')
     print_fn('smi {}'.format( smi.shape ))
-    smi = smi.drop_duplicates().reset_index( drop=True )
+    smi = smi.drop_duplicates().reset_index(drop=True)
     print_fn('smi {}'.format( smi.shape ))
     
     # Duplicates
@@ -110,11 +114,11 @@ def run(args):
     # Drop bad SMILES (that were not canonicalized)
     nan_ids = can_smi_vec.isna()
     bad_smi = smi[ nan_ids ]
-    smi = smi[ ~nan_ids ]
+    smi = smi[ ~nan_ids ].reset_index(drop=True)
     if len(bad_smi)>0:
         bad_smi.to_csv(outdir/'smi_canon_err.csv', index=False)
 
-    # --------------------------
+    # ==========================
     # Generate fingerprints
     # --------------------------
     ecfp2 = smiles_to_fps(smi, smi_name='smiles', radius=1, par_jobs=args['par_jobs'])
@@ -127,13 +131,14 @@ def run(args):
     ecfp6 = add_fea_prfx(ecfp6, prfx='ecfp6.', id0=fea_id0)
 
     # Save dfs
-    ecfp2.to_parquet( outdir/'ecfp2.ids.{}-{}'.format(i1,i2) )
-    ecfp4.to_parquet( outdir/'ecfp4.ids.{}-{}'.format(i1,i2) )
-    ecfp6.to_parquet( outdir/'ecfp6.ids.{}-{}'.format(i1,i2) )
+    file_format='parquet'
+    ecfp2.to_parquet( outdir/'ecfp2.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    ecfp4.to_parquet( outdir/'ecfp4.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    ecfp6.to_parquet( outdir/'ecfp6.ids.{}-{}.{}'.format(i1, i2, file_format) )
     del ecfp2, ecfp4, ecfp6
-    # --------------------------
+    # ==========================
 
-    # --------------------------
+    # ==========================
     # Generate descriptors
     # --------------------------
     dsc = smiles_to_mordred(smi, smi_name='smiles', par_jobs=args['par_jobs'])
@@ -143,11 +148,11 @@ def run(args):
     # Drop rows where all values are NaNs
     print_fn('\nDrop rows where all values are NaN ...')
     print_fn('Shape: {}'.format( dsc.shape ))
-    idx = (dsc.isna().sum(axis=1)==dsc.shape[1]).values
-    dsc = dsc.iloc[~idx, :]
+    idx = ( dsc.isna().sum(axis=1) == dsc.shape[1] ).values
+    dsc = dsc.iloc[~idx, :].reset_index(drop=True)
     # Drop cols where all values are NaNs
-    # idx = (dsc.isna().sum(axis=0)==dsc.shape[0]).values
-    # dsc = dsc.iloc[:, ~idx]
+    # idx = ( dsc.isna().sum(axis=0) == dsc.shape[0] ).values
+    # dsc = dsc.iloc[:, ~idx].reset_index(drop=True)
     print_fn('Shape: {}'.format( dsc.shape ))
 
     # Filter NaNs (step 2)
@@ -176,17 +181,19 @@ def run(args):
     # Save
     print_fn('\nSave ...')
     dsc = dsc.reset_index(drop=True)
-    fname = 'dsc.ids.{}-{}'.format(i1,i2)
-    dsc.to_parquet( outdir/(fname+'.parquet') )
+    file_format='parquet'
+    dsc.to_parquet( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    # dsc.to_csv( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
+    # dsc.to_parquet( outdir/(fname+'.parquet') )
     # dsc.to_csv( outdir/(fname+'.csv'), index=False )
-    # --------------------------
+    # ==========================
 
-    # --------------------------
+    # ==========================
     # Generate images
     # --------------------------
     # TODO
     pass
-    # --------------------------
+    # ==========================
 
     print_fn('\nRuntime {:.2f} mins'.format( (time()-t0)/60 ))
     print_fn('Done.')
