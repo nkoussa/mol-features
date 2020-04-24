@@ -23,7 +23,7 @@ $ mkdir -p data/raw
 ```
 
 Copy SMILES from Box or Petrel to `./data/raw/` (e.g., from Box copy 2019-nCoV/drug-screening/Baseline-Screen-Datasets).
-Run the main script to canoncalize the SMILES and compute the feature sets. Unless you specify the output dir (with the `--outdir` argument), the computed features are dumpet into `./out`.
+Run the main script to canoncalize the SMILES and compute the feature sets. You need to specify the full path to the smiles file (argument `--smiles_path`). The file must contain a column `smiles` which is used to compute the features. Unless you specify the output dir (argument `--outdir`), the computed features are dumpet into `./out`.
 ```shell
 $ python ./src/gen_mol_features.py --smiles_path data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi --par_jobs 8
 ```
