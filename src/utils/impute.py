@@ -40,12 +40,11 @@ def impute_values(data, print_fn=print):
     - try regressor (impute continuous features) or classifier (impute discrete features)
     """
     from sklearn.impute import SimpleImputer, MissingIndicator
-    data = data.copy()
 
     # Remove rows and cols where all values are NaN
     # (otherwise might be problems with imputation)
     idx = (data.isna().sum(axis=1)==data.shape[1]).values
-    data = data.iloc[~idx, :]
+    data = data.iloc[~idx, :].reset_index(drop=True)
     idx = (data.isna().sum(axis=0)==data.shape[0]).values
     data = data.iloc[:, ~idx]
     
@@ -54,8 +53,7 @@ def impute_values(data, print_fn=print):
     print_fn('Cols with missing values (before impute): {}'.format(n_impute_cols))
 
     if n_impute_cols > 0:
-        # Split numerical from other features (only numerical will be imputed;
-        # the other features can be cell and drug labels)
+        # Split numerical from other features (only numerical will be imputed)
         num_data, non_num_data = get_num_and_cat_cols(data)
 
         # Proceed with numerical featues

@@ -12,7 +12,7 @@ from pathlib import Path
 from time import time
 from datetime import datetime
 import argparse
-from pprint import pprint, pformat
+from pprint import pformat
 
 import numpy as np
 import pandas as pd
@@ -29,19 +29,22 @@ from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps
 # from smiles import canon_smiles, smiles_to_mordred
 
 # DATADIR
+# DATADIR = Path(filepath, '../data/raw/UC-molecules')
+DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1 (aka ena+db)')
 # DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2 (current)')
-DATADIR = Path(filepath, '../data/raw/UC-molecules')
 
 # OUTDIR
 t = datetime.now()
 t = [t.year, '-', t.month, '-', t.day]
 date = ''.join( [str(i) for i in t] )
+# OUTDIR = Path( filepath, '../data/processed/UC-molecules/', date )
+OUTDIR = Path( filepath, '../data/processed/BL1/', date )
 # OUTDIR = Path( filepath, '../data/processed/BL2/', date )
-OUTDIR = Path( filepath, '../data/processed/UC-molecules/', date )
 
 # SMILES
+# in_fname = 'UC.smi'
+in_fname = 'ena+db.smi'
 # in_fname = 'BL2.smi'
-in_fname = 'UC.smi'
 SMILES_PATH = str( DATADIR/in_fname )
 
 
@@ -71,7 +74,6 @@ def run(args):
     smiles_path = Path(args['smiles_path'])
     smi = pd.read_csv( smiles_path, sep='\t', names=['smiles', 'name'] )
     smi['smiles'] = smi['smiles'].map(lambda x: x.strip())
-    fname = smiles_path.with_suffix('').name
     n_smiles = smi.shape[0]
     fea_id0 = smi.shape[1] # this used as index where features begin
 
@@ -89,21 +91,17 @@ def run(args):
     print_fn( f'File path: {filepath}' )
     print_fn( f'\n{pformat(args)}' )
 
-    print_fn('\nPython filepath {}'.format( filepath ))
-    print_fn('Input data dir  {}'.format( DATADIR ))
+    print_fn('\nInput data dir  {}'.format( DATADIR ))
     print_fn('Output data dir {}'.format( outdir ))
 
-    # Remove duplicates
-    print_fn('\nDrop duplicates from smiles ...')
-    print_fn('smi {}'.format( smi.shape ))
-    smi = smi.drop_duplicates().reset_index(drop=True)
-    print_fn('smi {}'.format( smi.shape ))
-    
     # Duplicates
-    # smi = pd.read_csv( 'BL2.smi', sep='\t', names=['smiles', 'name'] )
     # dup = smi[ smi.duplicated(subset=['smiles'], keep=False) ].reset_index(drop=True)
     # print( dup['smiles'].value_counts() )
 
+    # Remove duplicates
+    print_fn('\nDrop duplicates ...')
+    smi = drop_dup_rows(smi, print_fn)
+    
     # Exract subset smiles
     smi = smi.iloc[i1:i2+1, :].reset_index(drop=True)
 
@@ -121,21 +119,21 @@ def run(args):
     # ==========================
     # Generate fingerprints
     # --------------------------
-    ecfp2 = smiles_to_fps(smi, smi_name='smiles', radius=1, par_jobs=args['par_jobs'])
-    ecfp4 = smiles_to_fps(smi, smi_name='smiles', radius=2, par_jobs=args['par_jobs'])
-    ecfp6 = smiles_to_fps(smi, smi_name='smiles', radius=3, par_jobs=args['par_jobs'])
-
-    # Update feature names
-    ecfp2 = add_fea_prfx(ecfp2, prfx='ecfp2.', id0=fea_id0)
-    ecfp4 = add_fea_prfx(ecfp4, prfx='ecfp4.', id0=fea_id0)
-    ecfp6 = add_fea_prfx(ecfp6, prfx='ecfp6.', id0=fea_id0)
-
-    # Save dfs
     file_format='parquet'
-    ecfp2.to_parquet( outdir/'ecfp2.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    ecfp4.to_parquet( outdir/'ecfp4.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    ecfp6.to_parquet( outdir/'ecfp6.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    del ecfp2, ecfp4, ecfp6
+    ecfp = smiles_to_fps(smi, smi_name='smiles', radius=1, par_jobs=args['par_jobs'])
+    ecfp = add_fea_prfx(ecfp, prfx='ecfp2.', id0=fea_id0)
+    ecfp.to_parquet( outdir/'ecfp2.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    del ecfp
+
+    ecfp = smiles_to_fps(smi, smi_name='smiles', radius=2, par_jobs=args['par_jobs'])
+    ecfp = add_fea_prfx(ecfp, prfx='ecfp4.', id0=fea_id0)
+    ecfp.to_parquet( outdir/'ecfp4.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    del ecfp
+
+    ecfp = smiles_to_fps(smi, smi_name='smiles', radius=3, par_jobs=args['par_jobs'])
+    ecfp = add_fea_prfx(ecfp, prfx='ecfp6.', id0=fea_id0)
+    ecfp.to_parquet( outdir/'ecfp6.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    del ecfp
     # ==========================
 
     # ==========================
@@ -173,8 +171,6 @@ def run(args):
     # Impute missing values
     print_fn('\nImpute NaNs ...')
     print_fn('Total NaNs: {}'.format( dsc.isna().values.flatten().sum() ))
-    # dsc = dsc.reset_index(drop=True)
-    # dsc = impute_values(dsc, print_fn=print_fn) # ap's approach
     dsc = dsc.fillna(0.0)
     print_fn('Total NaNs: {}'.format( dsc.isna().values.flatten().sum() ))
 
@@ -184,8 +180,6 @@ def run(args):
     file_format='parquet'
     dsc.to_parquet( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format) )
     # dsc.to_csv( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
-    # dsc.to_parquet( outdir/(fname+'.parquet') )
-    # dsc.to_csv( outdir/(fname+'.csv'), index=False )
     # ==========================
 
     # ==========================

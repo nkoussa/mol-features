@@ -63,7 +63,6 @@ def fps_single_smile(smi, radius=2, nbits=2048):
     fp = AllChem.GetMorganFingerprintAsBitVect(mol=mol, radius=radius, nBits=nbits)
     fp_arr = np.array(fp) # .tolist()
     # res = {'smiles': smi, 'fps': fp_arr}
-    # res = {'smiles': smi, 'fps': fp_arr}
     # return res
     return fp_arr
 
@@ -75,9 +74,11 @@ def smiles_to_fps(df, smi_name='smiles', radius=2, nbits=2048, par_jobs=8):
             delayed(fps_single_smile)(smi, radius=radius, nbits=nbits) for smi in df[smi_name].tolist())
     # fps_list = [dct['fps'] for dct in res]
     # smi_list = [dct['smiles'] for dct in res]
-    # fps = pd.DataFrame( np.vstack( fps_list ) )
+    # fps_arr = np.vstack( fps_list )
+    # fps = pd.DataFrame( fps_arr )
     # fps.insert(loc=0, column='smiles', value=smi_list)
-    fps = pd.DataFrame( res )
+    fps_arr = np.vstack( res )
+    fps = pd.DataFrame( fps_arr, dtype=np.int8 )
     fps = pd.concat([df, fps], axis=1)
     return fps
 
@@ -88,12 +89,12 @@ def smiles_to_mordred(df, smi_name='smiles', ignore_3D=True, par_jobs=8):
     from mordred import Calculator, descriptors
     df = df.reset_index(drop=True)
 
-    # Create Mordred calculator and convert smiles to mols
-    calc = Calculator(descriptors, ignore_3D=ignore_3D)
+    # Convert smiles to mols
     mols = [Chem.MolFromSmiles(smi) for smi in df[smi_name].values]
 
-    # Molecules to descriptors
+    # Create Mordred calculator and compute descriptors from molecules 
     # mordred-descriptor.github.io/documentation/master/_modules/mordred/_base/calculator.html#Calculator.pandas
+    calc = Calculator(descriptors, ignore_3D=ignore_3D)
     dsc = calc.pandas( mols, nproc=par_jobs, nmols=None, quiet=False, ipynb=False )
     dsc = pd.concat([df, dsc], axis=1)
     return dsc
