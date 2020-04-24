@@ -30,21 +30,21 @@ from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps
 
 # DATADIR
 # DATADIR = Path(filepath, '../data/raw/UC-molecules')
-DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1 (aka ena+db)')
-# DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2 (current)')
+# DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1 (aka ena+db)')
+DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2 (current)')
 
 # OUTDIR
 t = datetime.now()
 t = [t.year, '-', t.month, '-', t.day]
 date = ''.join( [str(i) for i in t] )
 # OUTDIR = Path( filepath, '../data/processed/UC-molecules/', date )
-OUTDIR = Path( filepath, '../data/processed/BL1/', date )
-# OUTDIR = Path( filepath, '../data/processed/BL2/', date )
+# OUTDIR = Path( filepath, '../data/processed/BL1/', date )
+OUTDIR = Path( filepath, '../data/processed/BL2/', date )
 
 # SMILES
 # in_fname = 'UC.smi'
-in_fname = 'ena+db.smi'
-# in_fname = 'BL2.smi'
+# in_fname = 'ena+db.smi'
+in_fname = 'BL2.smi'
 SMILES_PATH = str( DATADIR/in_fname )
 
 
@@ -112,6 +112,7 @@ def run(args):
     # Drop bad SMILES (that were not canonicalized)
     nan_ids = can_smi_vec.isna()
     bad_smi = smi[ nan_ids ]
+    smi['smiles'] = can_smi_vec
     smi = smi[ ~nan_ids ].reset_index(drop=True)
     if len(bad_smi)>0:
         bad_smi.to_csv(outdir/'smi_canon_err.csv', index=False)
