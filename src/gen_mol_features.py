@@ -31,7 +31,7 @@ from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps
 # DATADIR
 # DATADIR = Path(filepath, '../data/raw/UC-molecules')
 # DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1 (aka ena+db)')
-DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2 (current)')
+DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current')
 
 # OUTDIR
 t = datetime.now()
@@ -39,7 +39,8 @@ t = [t.year, '-', t.month, '-', t.day]
 date = ''.join( [str(i) for i in t] )
 # OUTDIR = Path( filepath, '../data/processed/UC-molecules/', date )
 # OUTDIR = Path( filepath, '../data/processed/BL1/', date )
-OUTDIR = Path( filepath, '../data/processed/BL2/', date )
+##OUTDIR = Path( filepath, '../data/processed/BL2/', date )
+OUTDIR = Path( filepath, '../out/BL2/', date )
 
 # SMILES
 # in_fname = 'UC.smi'
@@ -49,15 +50,17 @@ SMILES_PATH = str( DATADIR/in_fname )
 
 
 def parse_args(args):
-    parser = argparse.ArgumentParser(description='Generate molecular feature dataframes.')
+    parser = argparse.ArgumentParser(description='Generate molecular feature sets.')
     parser.add_argument('--smiles_path', default=SMILES_PATH, type=str,
                         help=f'Full path to the smiles file (default: {SMILES_PATH}).')
+    parser.add_argument('-od', '--outdir', default=None, type=str,
+                        help=f'Output dir (default: None).')
     parser.add_argument('--par_jobs', default=1, type=int, 
                         help=f'Number of joblib parallel jobs (default: 1).')
     parser.add_argument('--i1', default=0, type=int, 
-                        help=f'Begin index to sample smiles (default: 0).')
+                        help=f'Start index of a smiles sample (default: 0).')
     parser.add_argument('--i2', default=None, type=int, 
-                        help=f'End index to sample smiles (default: None).')
+                        help=f'End index of smiles sample (default: None).')
     args, other_args = parser.parse_known_args(args)
     return args
 
@@ -82,6 +85,10 @@ def run(args):
     ids_dir = 'smi.ids.{}-{}'.format(i1, i2)
     if i2 is None:
         i2 = n_smiles
+    if args['outdir'] is not None:
+        outdir = Path( args['outdir'] ).resolve()
+    else:
+        outdir = OUTDIR
     outdir = OUTDIR/ids_dir
     os.makedirs( outdir, exist_ok=True )
 
@@ -120,21 +127,32 @@ def run(args):
     # ==========================
     # Generate fingerprints
     # --------------------------
-    file_format='parquet'
-    ecfp = smiles_to_fps(smi, smi_name='smiles', radius=1, par_jobs=args['par_jobs'])
-    ecfp = add_fea_prfx(ecfp, prfx='ecfp2.', id0=fea_id0)
-    ecfp.to_parquet( outdir/'ecfp2.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    del ecfp
+    def gen_fps_and_save(smi, radius=1, par_jobs=par_jobs):
+        file_format='parquet'
+        ecfp = smiles_to_fps(smi, smi_name='smiles', radius=radius, par_jobs=par_jobs)
+        ecfp = add_fea_prfx(ecfp, prfx=f'ecfp{radius}.', id0=fea_id0)
+        ecfp.to_parquet( outdir/f'ecfp{radius}.ids.{i1}-{i2}.{file_format}' )
+        del ecfp
 
-    ecfp = smiles_to_fps(smi, smi_name='smiles', radius=2, par_jobs=args['par_jobs'])
-    ecfp = add_fea_prfx(ecfp, prfx='ecfp4.', id0=fea_id0)
-    ecfp.to_parquet( outdir/'ecfp4.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    del ecfp
+    gen_fps_and_save(smi, radius=1, par_jobs=par_jobs)
+    gen_fps_and_save(smi, radius=2, par_jobs=par_jobs)
+    gen_fps_and_save(smi, radius=3, par_jobs=par_jobs)
 
-    ecfp = smiles_to_fps(smi, smi_name='smiles', radius=3, par_jobs=args['par_jobs'])
-    ecfp = add_fea_prfx(ecfp, prfx='ecfp6.', id0=fea_id0)
-    ecfp.to_parquet( outdir/'ecfp6.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    del ecfp
+    # file_format='parquet'
+    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=1, par_jobs=args['par_jobs'])
+    # ecfp = add_fea_prfx(ecfp, prfx='ecfp2.', id0=fea_id0)
+    # ecfp.to_parquet( outdir/'ecfp2.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    # del ecfp
+
+    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=2, par_jobs=args['par_jobs'])
+    # ecfp = add_fea_prfx(ecfp, prfx='ecfp4.', id0=fea_id0)
+    # ecfp.to_parquet( outdir/'ecfp4.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    # del ecfp
+
+    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=3, par_jobs=args['par_jobs'])
+    # ecfp = add_fea_prfx(ecfp, prfx='ecfp6.', id0=fea_id0)
+    # ecfp.to_parquet( outdir/'ecfp6.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    # del ecfp
     # ==========================
 
     # ==========================
