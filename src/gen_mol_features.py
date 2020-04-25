@@ -131,8 +131,8 @@ def run(args):
     def gen_fps_and_save(smi, radius=1, par_jobs=par_jobs):
         file_format='parquet'
         ecfp = smiles_to_fps(smi, smi_name='smiles', radius=radius, par_jobs=par_jobs)
-        ecfp = add_fea_prfx(ecfp, prfx=f'ecfp{radius}.', id0=fea_id0)
-        ecfp.to_parquet( outdir/f'ecfp{radius}.ids.{i1}-{i2}.{file_format}' )
+        ecfp = add_fea_prfx(ecfp, prfx=f'ecfp{2*radius}.', id0=fea_id0)
+        ecfp.to_parquet( outdir/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}' )
         del ecfp
 
     gen_fps_and_save(smi, radius=1, par_jobs=par_jobs)
