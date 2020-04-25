@@ -31,7 +31,10 @@ from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps
 # DATADIR
 # DATADIR = Path(filepath, '../data/raw/UC-molecules')
 # DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1(ena+db)')
-DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current')
+# DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current')
+# SMILES_PATH = Path(filepath, '../data/raw/UC-molecules/UC.smi')
+# SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1(ena+db)/ena+db.smi')
+SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi')
 
 # OUTDIR
 t = datetime.now()
@@ -42,8 +45,8 @@ OUTDIR = Path( filepath, '../out/', date )
 # SMILES
 # in_fname = 'UC.smi'
 # in_fname = 'ena+db.smi'
-in_fname = 'BL2.smi'
-SMILES_PATH = str( DATADIR/in_fname )
+# in_fname = 'BL2.smi'
+# SMILES_PATH = str( DATADIR/in_fname )
 
 
 def parse_args(args):
@@ -69,6 +72,7 @@ def add_fea_prfx(df, prfx:str, id0:int):
 
 def run(args):
     t0 = time()
+    smiles_path = args['smiles_path']
     par_jobs = args['par_jobs']
     
     print('\nLoad smiles ...')
@@ -92,7 +96,8 @@ def run(args):
     print_fn( f'File path: {filepath}' )
     print_fn( f'\n{pformat(args)}' )
 
-    print_fn('\nInput data dir  {}'.format( DATADIR ))
+    # print_fn('\nInput data dir  {}'.format( DATADIR ))
+    print_fn('\nInput data path  {}'.format( smiles_path ))
     print_fn('Output data dir {}'.format( outdir ))
 
     # Duplicates
