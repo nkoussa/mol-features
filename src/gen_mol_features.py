@@ -37,10 +37,7 @@ DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current')
 t = datetime.now()
 t = [t.year, '-', t.month, '-', t.day]
 date = ''.join( [str(i) for i in t] )
-# OUTDIR = Path( filepath, '../data/processed/UC-molecules/', date )
-# OUTDIR = Path( filepath, '../data/processed/BL1/', date )
-##OUTDIR = Path( filepath, '../data/processed/BL2/', date )
-OUTDIR = Path( filepath, '../out/BL2/', date )
+OUTDIR = Path( filepath, '../out/', date )
 
 # SMILES
 # in_fname = 'UC.smi'
@@ -53,8 +50,8 @@ def parse_args(args):
     parser = argparse.ArgumentParser(description='Generate molecular feature sets.')
     parser.add_argument('--smiles_path', default=SMILES_PATH, type=str,
                         help=f'Full path to the smiles file (default: {SMILES_PATH}).')
-    parser.add_argument('-od', '--outdir', default=None, type=str,
-                        help=f'Output dir (default: None).')
+    parser.add_argument('-od', '--outdir', default=OUTDIR, type=str,
+                        help=f'Output dir (default: {OUTDIR}).')
     parser.add_argument('--par_jobs', default=1, type=int, 
                         help=f'Number of joblib parallel jobs (default: 1).')
     parser.add_argument('--i1', default=0, type=int, 
@@ -86,11 +83,7 @@ def run(args):
     ids_dir = 'smi.ids.{}-{}'.format(i1, i2)
     if i2 is None:
         i2 = n_smiles
-    if args['outdir'] is not None:
-        outdir = Path( args['outdir'] ).resolve()
-    else:
-        outdir = OUTDIR
-    outdir = OUTDIR/ids_dir
+    outdir = Path(args['outdir'])/ids_dir
     os.makedirs( outdir, exist_ok=True )
 
     # Logger
