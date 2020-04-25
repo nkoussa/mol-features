@@ -28,25 +28,18 @@ from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps
 # from utils import load_data, get_print_func, drop_dup_rows, dropna
 # from smiles import canon_smiles, smiles_to_mordred
 
-# DATADIR
-# DATADIR = Path(filepath, '../data/raw/UC-molecules')
-# DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1(ena+db)')
-# DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current')
+# Date
+t = datetime.now()
+t = [t.year, '-', t.month, '-', t.day]
+date = ''.join( [str(i) for i in t] )
+
+# SMILES_PATH
 # SMILES_PATH = Path(filepath, '../data/raw/UC-molecules/UC.smi')
 # SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1(ena+db)/ena+db.smi')
 SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi')
 
 # OUTDIR
-t = datetime.now()
-t = [t.year, '-', t.month, '-', t.day]
-date = ''.join( [str(i) for i in t] )
-OUTDIR = Path( filepath, '../out/', date )
-
-# SMILES
-# in_fname = 'UC.smi'
-# in_fname = 'ena+db.smi'
-# in_fname = 'BL2.smi'
-# SMILES_PATH = str( DATADIR/in_fname )
+OUTDIR = Path( filepath, '../out' )
 
 
 def parse_args(args):
@@ -65,8 +58,8 @@ def parse_args(args):
     return args
 
 
-# Prefix features
 def add_fea_prfx(df, prfx:str, id0:int):
+    """ Add prefix feature columns. """
     return df.rename(columns={s: prfx+str(s) for s in df.columns[id0:]})
 
 
@@ -87,7 +80,7 @@ def run(args):
     ids_dir = 'smi.ids.{}-{}'.format(i1, i2)
     if i2 is None:
         i2 = n_smiles
-    outdir = Path(args['outdir'])/ids_dir
+    outdir = Path(args['outdir'])/date/ids_dir
     os.makedirs( outdir, exist_ok=True )
 
     # Logger
