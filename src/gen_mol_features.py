@@ -72,6 +72,7 @@ def add_fea_prfx(df, prfx:str, id0:int):
 
 def run(args):
     t0 = time()
+    par_jobs = args['par_jobs']
     
     print('\nLoad smiles ...')
     smiles_path = Path(args['smiles_path'])
@@ -113,7 +114,7 @@ def run(args):
     smi = smi.iloc[i1:i2+1, :].reset_index(drop=True)
 
     print_fn('\nCanonicalize smiles ...')
-    can_smi_vec = canon_smiles( smi['smiles'], par_jobs=args['par_jobs'] )
+    can_smi_vec = canon_smiles( smi['smiles'], par_jobs=par_jobs )
     can_smi_vec = pd.Series(can_smi_vec)
 
     # Drop bad SMILES (that were not canonicalized)
@@ -139,17 +140,17 @@ def run(args):
     gen_fps_and_save(smi, radius=3, par_jobs=par_jobs)
 
     # file_format='parquet'
-    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=1, par_jobs=args['par_jobs'])
+    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=1, par_jobs=par_jobs)
     # ecfp = add_fea_prfx(ecfp, prfx='ecfp2.', id0=fea_id0)
     # ecfp.to_parquet( outdir/'ecfp2.ids.{}-{}.{}'.format(i1, i2, file_format) )
     # del ecfp
 
-    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=2, par_jobs=args['par_jobs'])
+    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=2, par_jobs=par_jobs)
     # ecfp = add_fea_prfx(ecfp, prfx='ecfp4.', id0=fea_id0)
     # ecfp.to_parquet( outdir/'ecfp4.ids.{}-{}.{}'.format(i1, i2, file_format) )
     # del ecfp
 
-    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=3, par_jobs=args['par_jobs'])
+    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=3, par_jobs=par_jobs)
     # ecfp = add_fea_prfx(ecfp, prfx='ecfp6.', id0=fea_id0)
     # ecfp.to_parquet( outdir/'ecfp6.ids.{}-{}.{}'.format(i1, i2, file_format) )
     # del ecfp
@@ -158,7 +159,7 @@ def run(args):
     # ==========================
     # Generate descriptors
     # --------------------------
-    dsc = smiles_to_mordred(smi, smi_name='smiles', par_jobs=args['par_jobs'])
+    dsc = smiles_to_mordred(smi, smi_name='smiles', par_jobs=par_jobs)
     dsc = add_fea_prfx(dsc, prfx='mod.', id0=fea_id0)
 
     # Filter NaNs (step 1)
