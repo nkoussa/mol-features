@@ -30,7 +30,7 @@ from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps
 
 # DATADIR
 # DATADIR = Path(filepath, '../data/raw/UC-molecules')
-# DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1 (aka ena+db)')
+# DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1(ena+db)')
 DATADIR = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current')
 
 # OUTDIR
@@ -138,22 +138,6 @@ def run(args):
     gen_fps_and_save(smi, radius=1, par_jobs=par_jobs)
     gen_fps_and_save(smi, radius=2, par_jobs=par_jobs)
     gen_fps_and_save(smi, radius=3, par_jobs=par_jobs)
-
-    # file_format='parquet'
-    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=1, par_jobs=par_jobs)
-    # ecfp = add_fea_prfx(ecfp, prfx='ecfp2.', id0=fea_id0)
-    # ecfp.to_parquet( outdir/'ecfp2.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    # del ecfp
-
-    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=2, par_jobs=par_jobs)
-    # ecfp = add_fea_prfx(ecfp, prfx='ecfp4.', id0=fea_id0)
-    # ecfp.to_parquet( outdir/'ecfp4.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    # del ecfp
-
-    # ecfp = smiles_to_fps(smi, smi_name='smiles', radius=3, par_jobs=par_jobs)
-    # ecfp = add_fea_prfx(ecfp, prfx='ecfp6.', id0=fea_id0)
-    # ecfp.to_parquet( outdir/'ecfp6.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    # del ecfp
     # ==========================
 
     # ==========================
