@@ -1,7 +1,7 @@
 """
 This script computes Mordred descriptors and saves the dataframe.
 (each feature type is prefixed with an appropriate identifier):
-    Mordred descriptors (prefix: .mod)
+    Mordred descriptors (prefix: .dsc)
 """
 import warnings
 warnings.filterwarnings('ignore')
@@ -139,7 +139,7 @@ def run(args):
     # Generate descriptors
     # --------------------------
     dsc = smiles_to_mordred(smi, smi_name='SMILES', par_jobs=par_jobs)
-    dsc = add_fea_prfx(dsc, prfx='mod.', id0=fea_id0)
+    dsc = add_fea_prfx(dsc, prfx='dsc.', id0=fea_id0)
 
     # Filter NaNs (step 1)
     # Drop rows where all values are NaNs
