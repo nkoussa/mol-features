@@ -16,8 +16,8 @@ def canon_single_smile(smi):
     return can_smi
 
 
-# def canon_df(df, smi_name='smiles', par_jobs=16):
-#     """ Canonicalize the smiles sting in column name smi_name. """
+# def canon_df(df, smi_name='SMILES', par_jobs=16):
+#     """ Canonicalize the SMILES sting in column name smi_name. """
 #     smi_vec = []
 #     t0 = time()
 #     if par_jobs>1:
@@ -29,7 +29,7 @@ def canon_single_smile(smi):
 #                 print('{}: {:.2f} mins'.format(i, (time()-t0)/60 ))
 #             can_smi = canon_single_smile( smi )
 #             smi_vec.append( can_smi ) # TODO: consider return this, instead of modifying df
-#     df.loc[:, 'smiles'] = smi_vec
+#     df.loc[:, 'SMILES'] = smi_vec
 #     return df
 
 
@@ -62,34 +62,34 @@ def fps_single_smile(smi, radius=2, nbits=2048):
     mol = Chem.MolFromSmiles( smi )
     fp = AllChem.GetMorganFingerprintAsBitVect(mol=mol, radius=radius, nBits=nbits)
     fp_arr = np.array(fp) # .tolist()
-    # res = {'smiles': smi, 'fps': fp_arr}
+    # res = {'SMILES': smi, 'fps': fp_arr}
     # return res
     return fp_arr
 
 
-def smiles_to_fps(df, smi_name='smiles', radius=2, nbits=2048, par_jobs=8):
-    """ Generate dataframe of fingerprints from smiles. """
+def smiles_to_fps(df, smi_name='SMILES', radius=2, nbits=2048, par_jobs=8):
+    """ Generate dataframe of fingerprints from SMILES. """
     df = df.reset_index(drop=True)
     res = Parallel(n_jobs=par_jobs, verbose=1)(
             delayed(fps_single_smile)(smi, radius=radius, nbits=nbits) for smi in df[smi_name].tolist())
     # fps_list = [dct['fps'] for dct in res]
-    # smi_list = [dct['smiles'] for dct in res]
+    # smi_list = [dct['SMILES'] for dct in res]
     # fps_arr = np.vstack( fps_list )
     # fps = pd.DataFrame( fps_arr )
-    # fps.insert(loc=0, column='smiles', value=smi_list)
+    # fps.insert(loc=0, column='SMILES', value=smi_list)
     fps_arr = np.vstack( res )
     fps = pd.DataFrame( fps_arr, dtype=np.int8 )
     fps = pd.concat([df, fps], axis=1)
     return fps
 
 
-def smiles_to_mordred(df, smi_name='smiles', ignore_3D=True, par_jobs=8):
-    """ Generate dataframe of Mordred descriptors from smiles. """
+def smiles_to_mordred(df, smi_name='SMILES', ignore_3D=True, par_jobs=8):
+    """ Generate dataframe of Mordred descriptors from SMILES. """
     from rdkit import Chem
     from mordred import Calculator, descriptors
     df = df.reset_index(drop=True)
 
-    # Convert smiles to mols
+    # Convert SMILES to mols
     mols = [Chem.MolFromSmiles(smi) for smi in df[smi_name].values]
 
     # Create Mordred calculator and compute descriptors from molecules 
