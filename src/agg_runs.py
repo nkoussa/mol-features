@@ -49,12 +49,18 @@ def run(args):
         if not dpath.exists():
             continue
         df = load_data( dpath )
+
+        if 'smiles' in df.columns:
+            df = df.rename(columns={'smiles': 'SMILES'})
+        if 'name' in df.columns:
+            df = df.rename(columns={'name': 'TITLE'})
+
         fea_dfs.append( df )
     fea_df = pd.concat( fea_dfs, axis=0 )
     del fea_dfs
 
     print(fea_df.shape)
-    fea_df = fea_df.drop_duplicates(subset=['smiles']).reset_index(drop=True)
+    fea_df = fea_df.drop_duplicates(subset=['TITLE']).reset_index(drop=True)
     print(fea_df.shape)
     
     fea_df.to_parquet(f'{res_dir}/{prfx}.{fea_name}.parquet')
