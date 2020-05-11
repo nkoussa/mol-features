@@ -36,10 +36,10 @@ date = ''.join( [str(i) for i in t] )
 # SMILES_PATH
 # SMILES_PATH = Path(filepath, '../data/raw/UC-molecules/UC.smi')
 # SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1(ena+db)/ena+db.smi')
-SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi')
+SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi').resolve()
 
 # OUTDIR
-OUTDIR = Path( filepath, '../out' )
+OUTDIR = Path( filepath, '../out' ).resolve()
 
 
 def parse_args(args):
