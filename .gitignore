@@ -1,6 +1,8 @@
 .*
 !.gitignore
 *__*
-src/old/
-data/
-out/
+
+/src/old/
+/data/
+/out/
+/tmp/
