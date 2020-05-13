@@ -22,7 +22,7 @@ filepath = Path(__file__).resolve().parent
 # Utils
 from utils.classlogger import Logger
 from utils.utils import load_data, get_print_func, drop_dup_rows, dropna
-from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps
+from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps, smiles_to_images
 # sys.path.append( os.path.abspath(filepath/'../utils') )
 # from classlogger import Logger
 # from utils import load_data, get_print_func, drop_dup_rows, dropna
@@ -36,9 +36,10 @@ date = ''.join( [str(i) for i in t] )
 # SMILES_PATH
 # SMILES_PATH = Path(filepath, '../data/raw/UC-molecules/UC.smi')
 # SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL1(ena+db)/ena+db.smi')
-SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi').resolve()
+# SMILES_PATH = Path(filepath, '../data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi').resolve()
+SMILES_PATH = Path(filepath, '../sample_data/BL2.smi.sample').resolve()
 
-# OUTDIR
+# Global outdir
 OUTDIR = Path( filepath, '../out' ).resolve()
 
 
@@ -61,6 +62,21 @@ def parse_args(args):
 def add_fea_prfx(df, prfx:str, id0:int):
     """ Add prefix feature columns. """
     return df.rename(columns={s: prfx+str(s) for s in df.columns[id0:]})
+
+
+def get_image(mol):
+    image = (255 * transforms.ToTensor()(Invert()(generateFeatures.smiles_to_image(mol))).numpy()).astype(np.uint8)
+    return image
+
+# def get_image(mol):
+#     """ (AP) breakdown of the function. """
+#     im = generateFeatures.smiles_to_image(mol)
+#     im = Invert()(im)
+#     im = transforms.ToTensor()(im)
+#     im = im.numpy()
+#     im = 255 * im
+#     image = im.astype(np.uint8)
+#     return image
 
 
 def run(args):
@@ -121,6 +137,21 @@ def run(args):
     smi = smi[ ~nan_ids ].reset_index(drop=True)
 
     # ==========================
+    # Generate imgaes
+    # --------------------------
+    # TODO
+    smi = smi[:200]
+    img_items = smiles_to_images(smi, smi_col_name='SMILES', id_col_name='TITLE',
+            molSize=(128, 128), kekulize=True, par_jobs=par_jobs)
+    import json
+    # json.dumps(img_items)
+    img_outpath = outdir/f'images.ids.{i1}-{i2}.json'
+    with open(img_outpath, 'w') as json_write_file:
+        json.dump(img_items, json_write_file)
+    with open(img_outpath, 'r') as json_read_file:
+        data = json.load(json_read_file)
+
+    # ==========================
     # Generate fingerprints
     # --------------------------
     def gen_fps_and_save(smi, radius=1, par_jobs=par_jobs):
@@ -179,13 +210,6 @@ def run(args):
     file_format='parquet'
     dsc.to_parquet( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format) )
     # dsc.to_csv( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
-    # ==========================
-
-    # ==========================
-    # Generate images
-    # --------------------------
-    # TODO
-    pass
     # ==========================
 
     print_fn('\nRuntime {:.2f} mins'.format( (time()-t0)/60 ))

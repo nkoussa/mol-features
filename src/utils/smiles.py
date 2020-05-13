@@ -70,8 +70,9 @@ def fps_single_smile(smi, radius=2, nbits=2048):
 def smiles_to_fps(df, smi_name='SMILES', radius=2, nbits=2048, par_jobs=8):
     """ Generate dataframe of fingerprints from SMILES. """
     df = df.reset_index(drop=True)
+    smiles = df[smi_name].values
     res = Parallel(n_jobs=par_jobs, verbose=1)(
-            delayed(fps_single_smile)(smi, radius=radius, nbits=nbits) for smi in df[smi_name].tolist())
+            delayed(fps_single_smile)(smi, radius=radius, nbits=nbits) for smi in smiles)
     # fps_list = [dct['fps'] for dct in res]
     # smi_list = [dct['SMILES'] for dct in res]
     # fps_arr = np.vstack( fps_list )
@@ -90,7 +91,8 @@ def smiles_to_mordred(df, smi_name='SMILES', ignore_3D=True, par_jobs=8):
     df = df.reset_index(drop=True)
 
     # Convert SMILES to mols
-    mols = [Chem.MolFromSmiles(smi) for smi in df[smi_name].values]
+    smiles = df[smi_name].values
+    mols = [Chem.MolFromSmiles(smi) for smi in smiles]
 
     # Create Mordred calculator and compute descriptors from molecules 
     # mordred-descriptor.github.io/documentation/master/_modules/mordred/_base/calculator.html#Calculator.pandas
@@ -98,5 +100,109 @@ def smiles_to_mordred(df, smi_name='SMILES', ignore_3D=True, par_jobs=8):
     dsc = calc.pandas( mols, nproc=par_jobs, nmols=None, quiet=False, ipynb=False )
     dsc = pd.concat([df, dsc], axis=1)
     return dsc
+
+# =================================================================================
+# class SMILES_TO_IMAGES():
+# TODO
+
+def smiles_to_images(df, smi_col_name='SMILES', id_col_name='TITLE',
+                     molSize=(128, 128), kekulize=True, par_jobs=8):
+    """ Convert SMILES to images of molecules.
+    Args:
+        df : dataframe with smiles and id columns of the molecules
+        smi_col_name : col name that stores SMILES string
+        id_col_name : col name that is used as molecule ID
+    """
+    df = df.reset_index(drop=True)
+    smiles = df[smi_col_name].tolist()
+
+    if par_jobs>1:
+        res = Parallel(n_jobs=par_jobs, verbose=1)(
+                delayed(smile_to_image)(smi, molSize=molSize, kekulize=kekulize) for smi in smiles)
+    else:
+        items = []
+        # for i, smi in enumerate(smiles):
+        for i in range( df.shape[0] ):
+            print(i)
+            # img = smile_to_image(smi, molSize=molSize, kekulize=kekulize)
+            # images.append( img )
+
+            # item = df.iloc[i,:]
+            # item = calc_img_item( item[smi_col_name], item[id_col_name] )
+            item = calc_img_item( df.loc[i, smi_col_name], df.loc[i, id_col_name] )
+            items.append( item )
+
+        res = dict(items)
+    return res
+
+
+# def mol_item_to_dct(mol_smi, mol_id):
+def calc_img_item(mol_smi, mol_id):
+    """ ... """
+    img = smile_to_image(mol_smi, molSize=(128, 128), kekulize=True, mol_computed=True)
+    # res = {'SMILES': mol_smi, 'TITLE': mol_id, 'img': img}
+    # return res
+    return mol_id, img
+
+
+# def smiles_to_image(mol, molSize=(128, 128), kekulize=True, mol_name='', mol_computed=True):
+def smile_to_image(smi, molSize=(128, 128), kekulize=True, mol_computed=True):
+    """ This is from:
+    github.com/2019-ncovgroup/MolecularAttention/blob/covid-images/features/generateFeatures.py
+    """
+    # (ap)
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    from rdkit.Chem.Draw import rdMolDraw2D
+    import io
+    import cairosvg
+    from PIL import Image
+    from images.features.utils import Invert
+    from torchvision import transforms
+    # (ap)
+    
+    # if not mol_computed:
+    #     mol = Chem.MolFromSmiles(mol)
+    mol = Chem.MolFromSmiles( smi )
+
+    mc = Chem.Mol( mol.ToBinary() )
+
+    if kekulize:
+        try:
+            Chem.Kekulize( mc )
+        except:
+            mc = Chem.Mol( mol.ToBinary() )
+
+    if not mc.GetNumConformers():
+        rdDepictor.Compute2DCoords( mc )
+
+    drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
+    drawer.DrawMolecule( mc )
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText()
+
+    image = Image.open(io.BytesIO(cairosvg.svg2png(
+        bytestring=svg, parent_width=100, parent_height=100, scale=1)))
+    image.convert('RGB')
+    im = image
+
+    # This is from func get_image(mol)
+    im = Invert()(im)
+    im = transforms.ToTensor()(im)
+    im = im.numpy()
+    im = 255 * im
+    im = im.astype(np.uint8)
+    return im
+
+
+# def get_image(mol):
+#     """ (AP) breakdown of the function. """
+#     im = generateFeatures.smiles_to_image(mol)
+#     im = Invert()(im)
+#     im = transforms.ToTensor()(im)
+#     im = im.numpy()
+#     im = 255 * im
+#     image = im.astype(np.uint8)
+#     return image
 
 
