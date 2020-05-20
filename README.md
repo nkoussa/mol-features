@@ -8,7 +8,7 @@ The code takes SMILES stings, canonicalizes, and generates multiple feature sets
 - [x] ECFP6
 - [ ] Images
 
-<img src="images/dsc.df.png" alt="drawing" height="220"/>
+<img src="README/dsc.df.png" alt="drawing" height="220"/>
 
 ## Getting started
 Clone the repo.

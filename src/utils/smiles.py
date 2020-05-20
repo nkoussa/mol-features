@@ -105,49 +105,50 @@ def smiles_to_mordred(df, smi_name='SMILES', ignore_3D=True, par_jobs=8):
 # class SMILES_TO_IMAGES():
 # TODO
 
-def smiles_to_images(df, smi_col_name='SMILES', id_col_name='TITLE',
+def smiles_to_images(df, smi_col_name='SMILES', title_col_name='TITLE',
                      molSize=(128, 128), kekulize=True, par_jobs=8):
     """ Convert SMILES to images of molecules.
     Args:
         df : dataframe with smiles and id columns of the molecules
         smi_col_name : col name that stores SMILES string
-        id_col_name : col name that is used as molecule ID
+        title_col_name : col name that is used as molecule ID (e.g., TITLE)
     """
+    assert smi_col_name in df.columns, f'{smi_col_name} is not in df.columns'
+    assert title_col_name in df.columns, f'{title_col_name} is not in df.columns'
+    kwargs = {'molSize': (128, 128), 'kekulize': True}
     df = df.reset_index(drop=True)
     smiles = df[smi_col_name].tolist()
+    # import pdb; pdb.set_trace()
 
     if par_jobs>1:
         res = Parallel(n_jobs=par_jobs, verbose=1)(
-                delayed(smile_to_image)(smi, molSize=molSize, kekulize=kekulize) for smi in smiles)
+                delayed(calc_img_item)(
+                    df.loc[i, smi_col_name], df.loc[i, title_col_name],
+                    **kwargs) for i in range(df.shape[0]))
     else:
-        items = []
-        # for i, smi in enumerate(smiles):
+        res = []
         for i in range( df.shape[0] ):
-            print(i)
-            # img = smile_to_image(smi, molSize=molSize, kekulize=kekulize)
-            # images.append( img )
-
-            # item = df.iloc[i,:]
-            # item = calc_img_item( item[smi_col_name], item[id_col_name] )
-            item = calc_img_item( df.loc[i, smi_col_name], df.loc[i, id_col_name] )
-            items.append( item )
-
-        res = dict(items)
+            mol_smi = df.loc[i, smi_col_name]
+            mol_title = df.loc[i, title_col_name]
+            item = calc_img_item( mol_smi, mol_title, **kwargs )
+            res.append( item )
     return res
 
 
-# def mol_item_to_dct(mol_smi, mol_id):
-def calc_img_item(mol_smi, mol_id):
-    """ ... """
-    img = smile_to_image(mol_smi, molSize=(128, 128), kekulize=True, mol_computed=True)
-    # res = {'SMILES': mol_smi, 'TITLE': mol_id, 'img': img}
-    # return res
-    return mol_id, img
+def calc_img_item(mol_smi, mol_title, molSize=(128, 128), kekulize=True):
+    """ Call for a func that generates the mol image and put it
+    in a dict with appropriate metadata.
+    """
+    kwargs = {'molSize': molSize, 'kekulize': kekulize}
+    ret = smile_to_image(mol_smi, **kwargs)
+    ret.update( {'TITLE': mol_title} )
+    ret = {k: ret[k] for k in ['SMILES', 'TITLE', 'img']} # re-org dict
+    return ret
 
 
-# def smiles_to_image(mol, molSize=(128, 128), kekulize=True, mol_name='', mol_computed=True):
 def smile_to_image(smi, molSize=(128, 128), kekulize=True, mol_computed=True):
-    """ This is from:
+    """ Covenrt SMILES to image.
+    This is from:
     github.com/2019-ncovgroup/MolecularAttention/blob/covid-images/features/generateFeatures.py
     """
     # (ap)
@@ -162,6 +163,7 @@ def smile_to_image(smi, molSize=(128, 128), kekulize=True, mol_computed=True):
     # (ap)
     
     # if not mol_computed:
+    #     # If mol is already converted from SMILES
     #     mol = Chem.MolFromSmiles(mol)
     mol = Chem.MolFromSmiles( smi )
 
@@ -184,25 +186,16 @@ def smile_to_image(smi, molSize=(128, 128), kekulize=True, mol_computed=True):
     image = Image.open(io.BytesIO(cairosvg.svg2png(
         bytestring=svg, parent_width=100, parent_height=100, scale=1)))
     image.convert('RGB')
-    im = image
+    image = Invert()(image)
 
-    # This is from func get_image(mol)
-    im = Invert()(im)
-    im = transforms.ToTensor()(im)
-    im = im.numpy()
-    im = 255 * im
-    im = im.astype(np.uint8)
-    return im
+    # That's from get_image_dct(mol)
+    # image = (255 * transforms.ToTensor()(Invert()(generateFeatures.smiles_to_image(mol))).numpy()).astype(np.uint8)
+    image = Invert()(image) # TODO is this redundant??
+    image = transforms.ToTensor()(image)
+    image = image.numpy()
+    image = 255 * image
+    image = image.astype(np.uint8)
 
-
-# def get_image(mol):
-#     """ (AP) breakdown of the function. """
-#     im = generateFeatures.smiles_to_image(mol)
-#     im = Invert()(im)
-#     im = transforms.ToTensor()(im)
-#     im = im.numpy()
-#     im = 255 * im
-#     image = im.astype(np.uint8)
-#     return image
-
+    ret = {'SMILES': smi, 'img': image}
+    return ret
 

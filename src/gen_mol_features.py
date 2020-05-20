@@ -13,6 +13,7 @@ from time import time
 from datetime import datetime
 import argparse
 from pprint import pformat
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -40,7 +41,7 @@ date = ''.join( [str(i) for i in t] )
 SMILES_PATH = Path(filepath, '../sample_data/BL2.smi.sample').resolve()
 
 # Global outdir
-OUTDIR = Path( filepath, '../out' ).resolve()
+OUTDIR = Path(filepath, '../out').resolve()
 
 
 def parse_args(args):
@@ -86,7 +87,6 @@ def run(args):
     
     print('\nLoad SMILES ...')
     smiles_path = Path(args['smiles_path'])
-    # smi = pd.read_csv( smiles_path, sep='\t', names=['smiles', 'name'] )
     smi = pd.read_csv( smiles_path, sep='\t', names=['SMILES', 'TITLE'] )
     smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
     smi['TITLE'] = smi['TITLE'].map(lambda x: x.strip())
@@ -102,14 +102,13 @@ def run(args):
     os.makedirs( outdir, exist_ok=True )
 
     # Logger
-    lg = Logger( outdir/'gen.mord.df.log' )
+    lg = Logger( outdir/'gen.fea.dfs.log' )
     print_fn = get_print_func( lg.logger )
     print_fn( f'File path: {filepath}' )
     print_fn( f'\n{pformat(args)}' )
 
-    # print_fn('\nInput data dir  {}'.format( DATADIR ))
     print_fn('\nInput data path  {}'.format( smiles_path ))
-    print_fn('Output data dir {}'.format( outdir ))
+    print_fn('Output data dir  {}'.format( outdir ))
 
     # Duplicates
     # dup = smi[ smi.duplicated(subset=['smiles'], keep=False) ].reset_index(drop=True)
@@ -136,22 +135,22 @@ def run(args):
     smi['SMILES'] = can_smi_vec
     smi = smi[ ~nan_ids ].reset_index(drop=True)
 
-    # ==========================
+    # ========================================================
     # Generate imgaes
     # --------------------------
     # TODO
-    smi = smi[:200]
-    img_items = smiles_to_images(smi, smi_col_name='SMILES', id_col_name='TITLE',
+    images = smiles_to_images(smi, smi_col_name='SMILES', title_col_name='TITLE',
             molSize=(128, 128), kekulize=True, par_jobs=par_jobs)
-    import json
-    # json.dumps(img_items)
-    img_outpath = outdir/f'images.ids.{i1}-{i2}.json'
-    with open(img_outpath, 'w') as json_write_file:
-        json.dump(img_items, json_write_file)
-    with open(img_outpath, 'r') as json_read_file:
-        data = json.load(json_read_file)
+    import pdb; pdb.set_trace()
+    img_outpath = outdir/f'images.ids.{i1}-{i2}.pkl'
 
-    # ==========================
+    # Dump images to file (list of dicts)
+    pickle.dump( images, open(img_outpath, 'wb') )
+    # Load pkl
+    # aa = pickle.load(open(img_outpath, 'rb'))
+    # sum(images[0]['img'].reshape(-1,)-aa[0]['img'].reshape(-1,))
+
+    # ========================================================
     # Generate fingerprints
     # --------------------------
     def gen_fps_and_save(smi, radius=1, par_jobs=par_jobs):
@@ -161,14 +160,15 @@ def run(args):
         ecfp.to_parquet( outdir/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}' )
         del ecfp
 
+    import pdb; pdb.set_trace()
     gen_fps_and_save(smi, radius=1, par_jobs=par_jobs)
     gen_fps_and_save(smi, radius=2, par_jobs=par_jobs)
     gen_fps_and_save(smi, radius=3, par_jobs=par_jobs)
-    # ==========================
 
-    # ==========================
+    # ========================================================
     # Generate descriptors
     # --------------------------
+    import pdb; pdb.set_trace()
     dsc = smiles_to_mordred(smi, smi_name='SMILES', par_jobs=par_jobs)
     dsc = add_fea_prfx(dsc, prfx='dsc.', id0=fea_id0)
 
@@ -210,8 +210,8 @@ def run(args):
     file_format='parquet'
     dsc.to_parquet( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format) )
     # dsc.to_csv( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
-    # ==========================
 
+    # --------------------------------------------------------
     print_fn('\nRuntime {:.2f} mins'.format( (time()-t0)/60 ))
     print_fn('Done.')
     lg.kill_logger()
