@@ -1,0 +1,16 @@
+<<<<<<< HEAD
+#!/bin/bash
+smiles_path=data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi
+outdir=out/images_and_others
+par_jobs=64
+
+python src/gen_mol_features.py --smiles_path $smiles_path --outdir $outdir --par_jobs $par_jobs --i2 30000
+||||||| merged common ancestors
+=======
+#!/bin/bash
+smiles_path=data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi
+outdir=out/mlt_mod_img
+par_jobs=64
+
+python src/gen_mol_features.py --smiles_path $smiles_path --outdir $outdir --par_jobs $par_jobs --i2 30000
+>>>>>>> 78306eaa45f864fc31be9714095ec5840a7f7674
