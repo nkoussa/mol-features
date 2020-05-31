@@ -1,5 +1,10 @@
 """
-This script computes Mordred descriptors and saves the dataframe.
+This script computes molecular features and saves in appropriate files:
+    - Mordred descriptors
+    - ECFP2
+    - ECFP4
+    - ECFP6
+    - Images
 (each feature type is prefixed with an appropriate identifier):
     Mordred descriptors (prefix: .dsc)
 """
