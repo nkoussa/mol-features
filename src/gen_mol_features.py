@@ -6,7 +6,7 @@ This script computes molecular features and saves in appropriate files:
     - ECFP6
     - Images
 (each feature type is prefixed with an appropriate identifier):
-    Mordred descriptors (prefix: .dsc)
+    Mordred descriptors (prefix: .dd)
 """
 import warnings
 warnings.filterwarnings('ignore')
@@ -175,7 +175,7 @@ def run(args):
     # --------------------------
     import pdb; pdb.set_trace()
     dsc = smiles_to_mordred(smi, smi_name='SMILES', par_jobs=par_jobs)
-    dsc = add_fea_prfx(dsc, prfx='dsc.', id0=fea_id0)
+    dsc = add_fea_prfx(dsc, prfx='dd.', id0=fea_id0)
 
     # Filter NaNs (step 1)
     # Drop rows where all values are NaNs
