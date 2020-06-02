@@ -1,12 +1,11 @@
 """
-This script computes molecular features and saves in appropriate files:
-    - Mordred descriptors
-    - ECFP2
-    - ECFP4
-    - ECFP6
-    - Images
-(each feature type is prefixed with an appropriate identifier):
-    Mordred descriptors (prefix: .dd)
+This script computes molecular features and saves in appropriate files.
+The feature columns are prefixed with appropriate string:
+    - Mordred descriptors (dd.)
+    - ECFP2 (ecfp2.)
+    - ECFP4 (ecfp4.)
+    - ECFP6 (ecfp6.)
+    - Images (stored in dict)
 """
 import warnings
 warnings.filterwarnings('ignore')
