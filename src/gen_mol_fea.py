@@ -1,10 +1,10 @@
 """
 This script computes molecular features and saves in appropriate files.
 The feature columns are prefixed with appropriate string:
-    - Mordred descriptors (dd.)
-    - ECFP2 (ecfp2.)
-    - ECFP4 (ecfp4.)
-    - ECFP6 (ecfp6.)
+    - Mordred descriptors (dd_)
+    - ECFP2 (ecfp2_)
+    - ECFP4 (ecfp4_)
+    - ECFP6 (ecfp6_)
     - Images (stored in dict)
 """
 import warnings
@@ -174,7 +174,7 @@ def run(args):
     # --------------------------
     import pdb; pdb.set_trace()
     dsc = smiles_to_mordred(smi, smi_name='SMILES', par_jobs=par_jobs)
-    dsc = add_fea_prfx(dsc, prfx='dd.', id0=fea_id0)
+    dsc = add_fea_prfx(dsc, prfx='dd_', id0=fea_id0)
 
     # Filter NaNs (step 1)
     # Drop rows where all values are NaNs
@@ -212,8 +212,8 @@ def run(args):
     print_fn('\nSave ...')
     dsc = dsc.reset_index(drop=True)
     file_format='parquet'
-    dsc.to_parquet( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format) )
-    # dsc.to_csv( outdir/'dsc.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
+    dsc.to_parquet( outdir/'dd.ids.{}-{}.{}'.format(i1, i2, file_format) )
+    # dsc.to_csv( outdir/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
 
     # --------------------------------------------------------
     print_fn('\nRuntime {:.2f} mins'.format( (time()-t0)/60 ))

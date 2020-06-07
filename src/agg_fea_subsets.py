@@ -24,7 +24,7 @@ filepath = Path(__file__).resolve().parent
 from utils.classlogger import Logger
 from utils.utils import load_data, get_print_func
 
-FEA_MAIN_DIR = Path(filepath, '../data/raw/hpc-fea-splitted')
+FEA_MAIN_DIR = Path(filepath, '../data/raw/fea-subsets-hpc')
 FEA_TYPE = 'descriptors'
 FEA_DIR = FEA_MAIN_DIR/FEA_TYPE
 
@@ -104,7 +104,7 @@ def run(args):
     fea_df = pd.concat(dfs, axis=0)
     fea_df = fea_df.drop_duplicates(subset=['TITLE'])
     fea_df = fea_df.reset_index(drop=True)
-    print_fn('fea_df.shape', fea_df.shape)
+    print_fn('fea_df.shape {}'.format(fea_df.shape))
 
     # Save
     fea_df.to_parquet(outdir/f'dd_fea.parquet')

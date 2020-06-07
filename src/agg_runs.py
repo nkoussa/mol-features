@@ -2,7 +2,7 @@
 Aggregate feature subsets from multiple runs.
 
 Example:
-    python src/agg_runs.py --res_dir out/BL2/2020-4-24 --fea dsc --prfx BL2
+    python src/agg_runs.py --res_dir out/BL2/2020-4-24 --fea dd --prfx BL2
 """
 import warnings
 warnings.filterwarnings('ignore')
@@ -29,8 +29,8 @@ def parse_args(args):
     parser = argparse.ArgumentParser(description='Aggregate feature subsets from multiple runs.')
     parser.add_argument('--res_dir', required=True, default=None, type=str,
                         help='Global dir where multiple runs were dumped (default: None).')
-    parser.add_argument('--fea', required=True, default='dsc', type=str,
-                        help='Feature type (default: dsc).')
+    parser.add_argument('--fea', required=True, default='dd', type=str,
+                        help='Feature type (default: dd).')
     parser.add_argument('--prfx', default=None, type=str,
                         help='Name prefix for the output file (default: None).')
     args = parser.parse_args(args)
