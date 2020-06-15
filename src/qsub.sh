@@ -4,6 +4,7 @@
 #COBALD -q default
 #COBALD -A CVD_Research 
 
+# (ap) Note! I didn't think have run this script.
 echo "Starting Cobalt job script"
 
 SAMPLES=976019
