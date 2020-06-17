@@ -1,5 +1,6 @@
 """
-Aggregate feature subsets from multiple runs.
+Aggregate feature subsets from multiple runs from feature generation
+code in gen_mol_fea.py. 
 
 Example:
     python src/agg_runs.py --res_dir out/BL2/2020-4-24 --fea dd --prfx BL2
@@ -21,8 +22,6 @@ filepath = Path(__file__).resolve().parent
 
 # Utils
 from utils.utils import load_data
-# sys.path.append( os.path.abspath(filepath/'../utils') )
-# from utils import load_data
 
 
 def parse_args(args):
