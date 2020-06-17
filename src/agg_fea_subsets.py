@@ -88,6 +88,7 @@ def run(args):
 
     fea_df = pd.concat(dfs, axis=0)
     fea_df = fea_df.drop_duplicates(subset=['TITLE'])
+    fea_df[dd_fea_names] = fea_df[dd_fea_names].fillna(0)
     fea_df = fea_df.reset_index(drop=True)
     print_fn('fea_df.shape {}'.format(fea_df.shape))
 
