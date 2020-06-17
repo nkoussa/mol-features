@@ -1,9 +1,9 @@
 Main use cases of this repo:
 1. Generate molecular feature sets for ML models `src/gen_mol_fea.py`
-2. Aggregate molecular feature sets (generated on an HPC) `src/agg_fea_hpc`
+2. Aggregate molecular feature sets generated on HPC (Theta, Frontera) `src/agg_fea_hpc.py`
 
 ## Generate molecular feature sets
-The code takes SMILES stings, canonicalizes, and generates multiple feature sets stored in separate files.<br>
+`src/gen_mol_fea.py` takes SMILES stings, canonicalizes, and generates multiple feature sets stored in separate files.<br>
 Mordred descriptors and fingerprints are stored in dataframes (e.g., parquet, csv).<br>
 Images are stored in python dictionaries (pickle files).<br>
 Each feature in a dataframe is prefixed with an appropriate string indicating the type.
@@ -13,11 +13,12 @@ Each feature in a dataframe is prefixed with an appropriate string indicating th
 - [x] ECFP6 (prefix: `ecfp6`)
 - [x] Images
 
-These datasets are then used to generate ML dataframes in `github.com/2019-ncovgroup/ML-docking-dataframe-generator` for each protein target. Alteratively, these feature sets can be used for inference with `github.com/brettin/ML-training-inferencing`.
+These datasets are then used to generate ML dataframes for each protein target `github.com/2019-ncovgroup/ML-docking-dataframe-generator`.<br>
+Alteratively, these feature sets can be used for inference with `github.com/brettin/ML-training-inferencing`.
 <img src="README/dsc.df.png" alt="drawing" height="220"/>
 
 ## Aggregate molecular feature sets from HPC runs
-Takes the output from `github.com/globus-labs/covid-analyses`, and aggregates files into a single dataframe. At this point, the code was tested only for Mordred descriptors. 
+`src/agg_fea_hpc.py` takes the output from `github.com/globus-labs/covid-analyses` and aggregates files into a single dataframe. At this point, the code was tested only for Mordred descriptors. 
 
 ## Getting started
 Clone the repo.
