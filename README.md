@@ -1,9 +1,9 @@
 Main use cases of this repo:
-1. Generate molecular feature sets for ML models `src/gen_mol_fea.py`
-2. Aggregate molecular feature sets generated on HPC (Theta, Frontera) `src/agg_fea_hpc.py`
+1. Generate molecular features for ML models `src/gen_mol_fea.py`
+2. Aggregate molecular features generated on HPC (Theta, Frontera) `src/agg_fea_hpc.py`
 
-## Generate molecular feature sets
-`src/gen_mol_fea.py` takes SMILES stings, canonicalizes, and generates multiple feature sets stored in separate files.<br>
+## Generate molecular features
+`src/gen_mol_fea.py` takes SMILES, canonicalizes, and generates multiple feature sets stored in separate files.<br>
 Mordred descriptors and fingerprints are stored in dataframes (e.g., parquet, csv).<br>
 Images are stored in python dictionaries (pickle files).<br>
 Each feature in a dataframe is prefixed with an appropriate string indicating the type.
@@ -17,8 +17,8 @@ These datasets are then used to generate ML dataframes for each protein target `
 Alteratively, these feature sets can be used for inference with `github.com/brettin/ML-training-inferencing`.
 <img src="README/dsc.df.png" alt="drawing" height="220"/>
 
-## Aggregate molecular feature sets from HPC runs
-`src/agg_fea_hpc.py` takes the output from `github.com/globus-labs/covid-analyses` and aggregates files into a single dataframe. At this point, the code was tested only for Mordred descriptors. 
+## Aggregate molecular feature from HPC runs
+`src/agg_fea_hpc.py` takes the output from `github.com/globus-labs/covid-analyses` and aggregates files into a single dataframe. At this point, the code was tested only to gerenare dataframe with Mordred descriptors. 
 
 ## Getting started
 Clone the repo.
@@ -33,7 +33,7 @@ $ mkdir -p data/raw
 ```
 
 Copy SMILES from Box or Petrel to `./data/raw/` (e.g., from Box copy 2019-nCoV/drug-screening/Baseline-Screen-Datasets).
-Run the main script to canoncalize the SMILES and compute the feature sets. You need to specify the full path to the smiles file (argument `--smiles_path`). The file must contain a column `smiles` which is used to compute the features. Unless you specify the output dir (argument `--outdir`), the computed features are dumpet into `./out`.
+Run the main script to canoncalize the SMILES and compute the feature sets. You need to specify the full path to the smiles file (argument `--smiles_path`). The file must contain a column `SMILES` which is used to compute the features. Unless you specify the output dir (argument `--outdir`), the computed features are dumped into `./out`.
 ```shell
 $ python ./src/gen_mol_features.py --smiles_path data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi --par_jobs 8
 ```
