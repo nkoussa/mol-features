@@ -5,8 +5,8 @@
 # usually generates those with this repo github.com/globus-labs/covid-analyses).
 
 # smiles_path=data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi
-smiles_path=data/raw/OZD-dock-2020-06-01/OZD.May29.unique.csv
+drg_set=OZD
 
-outdir=out/images_and_dfs
+outdir=out/images_and_dfs_hpc
 par_jobs=32
-python src/gen_mol_fea.py --smiles_path $smiles_path --outdir $outdir --par_jobs $par_jobs --i2 20000
+python src/gen_from_hpc.py --drg_set $drg_set --outdir $outdir --par_jobs $par_jobs

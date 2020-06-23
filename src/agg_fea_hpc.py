@@ -1,6 +1,7 @@
 """
 This script aggregates subsets of features from a large HPC run.
-For example, it takes descriptors generated on Theta using this repo:
+For example, it aggregates descriptors that were generated on Theta using this
+code:
 github.com/globus-labs/covid-analyses/tree/master/features/descriptors
 """
 import warnings
@@ -26,7 +27,7 @@ from utils.utils import load_data, get_print_func
 
 FEA_MAIN_DIR = Path(filepath, '../data/raw/fea-subsets-hpc')
 DRUG_SET = 'OZD'
-FEA_TYPE = 'descriptors'
+FEA_TYPE = 'descriptors' # TODO: this may change once we add more feature types
 FEA_DIR = FEA_MAIN_DIR/DRUG_SET/FEA_TYPE
 
 def parse_args(args):
@@ -35,7 +36,7 @@ def parse_args(args):
                         choices=['OZD', 'ORD'],
                         help=f'Drug set (default: {DRUG_SET}).')
     parser.add_argument('--fea_type', default=FEA_TYPE, type=str,
-                        choices=['descriptors'],
+                        choices=['descriptors', 'images', 'fps'],
                         help=f'Feature type (default: {FEA_TYPE}).')
     parser.add_argument('-od', '--outdir', default=None, type=str,
                         help=f'Output dir (default: None).')
@@ -72,6 +73,10 @@ def run(args):
     print_fn( f'File path: {filepath}' )
     print_fn( f'\n{pformat(args)}' )
 
+
+    # ========================================================
+    # Generate descriptors
+    # --------------------------
     dd_prfx = 'dd'
     dd_sep = '_'
     dd_fea_names = pd.read_csv(FEA_MAIN_DIR/'dd_fea_names.csv').columns.tolist()
@@ -81,13 +86,15 @@ def run(args):
 
     dfs = []
     for i, f in enumerate(fea_files):
-        if (i+1)%100 == 0:
+        if (i+1) % 100 == 0:
             print(f'Load {i+1} ... {f.name}')
         dd = pd.read_csv( Path(fea_files[i]), names=cols )
         dfs.append(dd)
 
+    ID = 'TITLE'
     fea_df = pd.concat(dfs, axis=0)
-    fea_df = fea_df.drop_duplicates(subset=['TITLE'])
+    fea_df = fea_df.drop_duplicates(subset=[ID])
+    fea_df = fea_df[ fea_df[ID].notna() ].reset_index(drop=True)
     fea_df[dd_fea_names] = fea_df[dd_fea_names].fillna(0)
     fea_df = fea_df.reset_index(drop=True)
     print_fn('fea_df.shape {}'.format(fea_df.shape))
@@ -96,7 +103,38 @@ def run(args):
     fea_df.to_parquet(outdir/f'dd_fea.parquet')
     del fea_df
 
-    # --------------------------------------------------------
+
+    # # ========================================================
+    # # Generate fingerprints
+    # # --------------------------
+    # dd_prfx = 'fps'
+    # dd_sep = '_'
+    # dd_fea_names = pd.read_csv(FEA_MAIN_DIR/'dd_fea_names.csv').columns.tolist()
+    # dd_fea_names = [c.strip() for c in dd_fea_names] # clean col names
+    # dd_fea_names = [dd_prfx+dd_sep+str(c) for c in dd_fea_names] # prefix fea cols
+    # cols = ['CAT', 'TITLE', 'SMILES'] + dd_fea_names
+
+    # dfs = []
+    # for i, f in enumerate(fea_files):
+    #     if (i+1) % 100 == 0:
+    #         print(f'Load {i+1} ... {f.name}')
+    #     dd = pd.read_csv( Path(fea_files[i]), names=cols )
+    #     dfs.append(dd)
+
+    # ID = 'TITLE'
+    # fea_df = pd.concat(dfs, axis=0)
+    # fea_df = fea_df.drop_duplicates(subset=[ID])
+    # fea_df = fea_df[ fea_df[ID].notna() ].reset_index(drop=True)
+    # fea_df[dd_fea_names] = fea_df[dd_fea_names].fillna(0)
+    # fea_df = fea_df.reset_index(drop=True)
+    # print_fn('fea_df.shape {}'.format(fea_df.shape))
+
+    # # Save
+    # fea_df.to_parquet(outdir/f'dd_fea.parquet')
+    # del fea_df
+
+
+    # ========================================================
     print_fn('\nRuntime {:.2f} mins'.format( (time()-t0)/60 ))
     print_fn('Done.')
     lg.kill_logger()
