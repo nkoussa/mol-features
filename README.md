@@ -8,9 +8,9 @@ Mordred descriptors and fingerprints are stored in dataframes (e.g., parquet, cs
 Images are stored in python dictionaries (pickle files).<br>
 Each feature in a dataframe is prefixed with an appropriate string indicating the type.
 - [x] Mordred descriptors (prefix: `dd_`)
-- [x] ECFP2 (prefix: `ecfp2`)
-- [x] ECFP4 (prefix: `ecfp4`)
-- [x] ECFP6 (prefix: `ecfp6`)
+- [x] ECFP2 (prefix: `ecfp2_`)
+- [x] ECFP4 (prefix: `ecfp4_`)
+- [x] ECFP6 (prefix: `ecfp6_`)
 - [x] Images
 
 These datasets are then used to generate ML dataframes for each protein target `github.com/2019-ncovgroup/ML-docking-dataframe-generator`.<br>
