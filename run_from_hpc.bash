@@ -9,4 +9,5 @@ drg_set=OZD
 
 outdir=out/images_and_dfs_hpc
 par_jobs=32
-python src/gen_from_hpc.py --drg_set $drg_set --outdir $outdir --par_jobs $par_jobs
+python src/agg_fea_hpc.py --drg_set $drg_set --outdir $outdir --par_jobs $par_jobs \
+    --fea_type descriptors fps images

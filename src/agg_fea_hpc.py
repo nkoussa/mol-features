@@ -27,17 +27,15 @@ from utils.utils import load_data, get_print_func
 
 FEA_MAIN_DIR = Path(filepath, '../data/raw/fea-subsets-hpc')
 DRUG_SET = 'OZD'
-FEA_TYPE = 'descriptors' # TODO: this may change once we add more feature types
-FEA_DIR = FEA_MAIN_DIR/DRUG_SET/FEA_TYPE
 
 def parse_args(args):
     parser = argparse.ArgumentParser(description='Aggregate molecular feature sets.')
     parser.add_argument('--drg_set', default=DRUG_SET, type=str,
                         choices=['OZD', 'ORD'],
                         help=f'Drug set (default: {DRUG_SET}).')
-    parser.add_argument('--fea_type', default=FEA_TYPE, type=str,
+    parser.add_argument('--fea_type', default=FEA_TYPE, type=str, nargs='+',
                         choices=['descriptors', 'images', 'fps'],
-                        help=f'Feature type (default: {FEA_TYPE}).')
+                        help=f'Feature type (default: descriptors).')
     parser.add_argument('-od', '--outdir', default=None, type=str,
                         help=f'Output dir (default: None).')
     parser.add_argument('--par_jobs', default=1, type=int, 
@@ -58,15 +56,11 @@ def run(args):
     fea_type = args['fea_type']
     par_jobs = args['par_jobs']
 
-    outdir = args['outdir']
+    outdir = Path(args['outdir'])
     if outdir is None:
-        outdir = Path(filepath, '../out', FEA_MAIN_DIR.name, drg_set, fea_type).resolve()
+        outdir = Path(filepath, '../out', FEA_MAIN_DIR.name, drg_set).resolve()
     os.makedirs(outdir, exist_ok=True)
     
-    # Get file names
-    files_path = Path(FEA_MAIN_DIR, drg_set, fea_type).resolve()
-    fea_files = sorted( files_path.glob(f'{drg_set}-*.csv') )
-
     # Logger
     lg = Logger( outdir/'gen.fea.dfs.log' )
     print_fn = get_print_func( lg.logger )
@@ -77,61 +71,124 @@ def run(args):
     # ========================================================
     # Generate descriptors
     # --------------------------
-    dd_prfx = 'dd'
-    dd_sep = '_'
-    dd_fea_names = pd.read_csv(FEA_MAIN_DIR/'dd_fea_names.csv').columns.tolist()
-    dd_fea_names = [c.strip() for c in dd_fea_names] # clean col names
-    dd_fea_names = [dd_prfx+dd_sep+str(c) for c in dd_fea_names] # prefix fea cols
-    cols = ['CAT', 'TITLE', 'SMILES'] + dd_fea_names
+    if 'descriptors' in fea_type:
+        fea_outpath = outdir/'descriptors'
+        files_path = Path(FEA_MAIN_DIR, drg_set, 'descriptors').resolve()
+        fea_files = sorted( files_path.glob(f'{drg_set}-*.csv') )
 
-    dfs = []
-    for i, f in enumerate(fea_files):
-        if (i+1) % 100 == 0:
-            print(f'Load {i+1} ... {f.name}')
-        dd = pd.read_csv( Path(fea_files[i]), names=cols )
-        dfs.append(dd)
+        if len(fea_files) > 0:
+            os.makedirs(fea_outpath, exist_ok=True)
 
-    ID = 'TITLE'
-    fea_df = pd.concat(dfs, axis=0)
-    fea_df = fea_df.drop_duplicates(subset=[ID])
-    fea_df = fea_df[ fea_df[ID].notna() ].reset_index(drop=True)
-    fea_df[dd_fea_names] = fea_df[dd_fea_names].fillna(0)
-    fea_df = fea_df.reset_index(drop=True)
-    print_fn('fea_df.shape {}'.format(fea_df.shape))
+            fea_prfx = 'dd'
+            fea_sep = '_'
+            fea_names = pd.read_csv(FEA_MAIN_DIR/'dd_fea_names.csv').columns.tolist()
+            fea_names = [c.strip() for c in fea_names] # clean names
+            fea_names = [fea_prfx+fea_sep+str(c) for c in fea_names] # prefix fea names
+            cols = ['CAT', 'TITLE', 'SMILES'] + fea_names
 
-    # Save
-    fea_df.to_parquet(outdir/f'dd_fea.parquet')
-    del fea_df
+            dfs = []
+            for i, f in enumerate(fea_files[:N]):
+                if (i+1) % 100 == 0:
+                    print(f'Load {i+1} ... {f.name}')
+                df = pd.read_csv( Path(fea_files[i]), names=cols )
+                dfs.append(df)
+
+            ID = 'TITLE'
+            data = pd.concat(dfs, axis=0)
+            data = data.drop_duplicates( subset=[ID] )
+            data = data[ data[ID].notna() ].reset_index(drop=True)
+            data[ fea_names ] = data[ fea_names ].fillna(0)
+            data = data.reset_index( drop=True )
+            print_fn('data.shape {}'.format(data.shape))
+
+            # Save
+            data.to_parquet(fea_outpath/f'{fea_prfx}.parquet')
+            del data
 
 
-    # # ========================================================
-    # # Generate fingerprints
-    # # --------------------------
-    # dd_prfx = 'fps'
-    # dd_sep = '_'
-    # dd_fea_names = pd.read_csv(FEA_MAIN_DIR/'dd_fea_names.csv').columns.tolist()
-    # dd_fea_names = [c.strip() for c in dd_fea_names] # clean col names
-    # dd_fea_names = [dd_prfx+dd_sep+str(c) for c in dd_fea_names] # prefix fea cols
-    # cols = ['CAT', 'TITLE', 'SMILES'] + dd_fea_names
+    # ========================================================
+    # Generate fingerprints
+    # --------------------------
+    if 'fps' in fea_type:
+        fea_outpath = outdir/'fps'
+        files_path = Path(FEA_MAIN_DIR, drg_set, 'fps').resolve()
+        fea_files = sorted( files_path.glob(f'{drg_set}-*.csv') )
 
-    # dfs = []
-    # for i, f in enumerate(fea_files):
-    #     if (i+1) % 100 == 0:
-    #         print(f'Load {i+1} ... {f.name}')
-    #     dd = pd.read_csv( Path(fea_files[i]), names=cols )
-    #     dfs.append(dd)
+        if len(fea_files) > 0:
+            os.makedirs(fea_outpath, exist_ok=True)
 
-    # ID = 'TITLE'
-    # fea_df = pd.concat(dfs, axis=0)
-    # fea_df = fea_df.drop_duplicates(subset=[ID])
-    # fea_df = fea_df[ fea_df[ID].notna() ].reset_index(drop=True)
-    # fea_df[dd_fea_names] = fea_df[dd_fea_names].fillna(0)
-    # fea_df = fea_df.reset_index(drop=True)
-    # print_fn('fea_df.shape {}'.format(fea_df.shape))
+            fea_prfx = 'ecfp2'
+            fea_sep = '_'
+            cols = ['CAT', 'TITLE', 'SMILES', 'fps']
 
-    # # Save
-    # fea_df.to_parquet(outdir/f'dd_fea.parquet')
-    # del fea_df
+            dfs = []
+            for i, f in enumerate(fea_files[:N]):
+                if (i+1) % 100 == 0:
+                    print(f'Load {i+1} ... {f.name}')
+                df = pd.read_csv( Path(fea_files[i]), names=cols )
+                dfs.append(df)
+
+            ID = 'TITLE'
+            data = pd.concat(dfs, axis=0)
+            data = data.drop_duplicates( subset=[ID] )
+            data = data[ data[ID].notna() ].reset_index(drop=True)
+            data = data.reset_index(drop=True)
+            print_fn('data.shape {}'.format(data.shape))
+
+            # Convert fps strings (base64) to integers
+            import base64
+            from rdkit.Chem import DataStructs
+            aa = []
+            for ii in data['fps'].values:
+                ii = DataStructs.ExplicitBitVect( base64.b64decode(ii) )
+                arr = np.zeros((1,))
+                DataStructs.ConvertToNumpyArray(ii, arr)
+                aa.append( arr )
+
+            fea_names = [fea_prfx+fea_sep+str(i+1) for i in range(len(aa[0]))] # prefix fea names
+            cols = ['CAT', 'TITLE', 'SMILES'] + fea_names
+            fea  = pd.DataFrame( np.vstack(aa), columns=fea_names )
+            # fea[dd_fea_names] = fea[dd_fea_names].fillna(0)
+            meta = data.drop(columns='fps')
+            data = pd.concat([meta, fea], axis=1)
+
+            # Save
+            data.to_parquet(fea_outpath/f'{fea_prfx}.parquet')
+            del data
+
+
+    # ========================================================
+    # Generate images
+    # --------------------------
+    # if 'images' in fea_type:
+    #     fea_outpath = outdir/'images'
+    #     files_path = Path(FEA_MAIN_DIR, drg_set, 'images').resolve()
+    #     fea_files = sorted( files_path.glob(f'{drg_set}-*.pkl') )
+
+    #     if len(fea_files) > 0:
+    #         os.makedirs(fea_outpath, exist_ok=True)
+
+    #         dfs = []
+    #         for i, f in enumerate(fea_files[:N]):
+    #             if (i+1) % 100 == 0:
+    #                 print(f'Load {i+1} ... {f.name}')
+    #             imgs = pickle.load(open(fea_files[i], 'rb'))
+
+    #             # That's from get_image_dct(mol)
+    #             # image = (255 * transforms.ToTensor()(Invert()(generateFeatures.smiles_to_image(mol))).numpy()).astype(np.uint8)
+    #             image = Invert()(image)
+    #             image = transforms.ToTensor()(image)
+    #             image = image.numpy()
+    #             image = 255 * image
+    #             image = image.astype(np.uint8)
+
+    #             # To dict
+    #             def img_data_to_dict( aa ):
+    #                 dct = {}
+    #                 dct['drg_set'] = aa[0]
+    #                 dct['TITLE'] = aa[1]
+    #                 dct['SMILES'] = aa[2]
+    #                 dct['img'] = aa[3]
 
 
     # ========================================================

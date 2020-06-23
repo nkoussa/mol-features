@@ -8,5 +8,6 @@
 smiles_path=data/raw/OZD-dock-2020-06-01/OZD.May29.unique.csv
 
 outdir=out/images_and_dfs
-par_jobs=32
-python src/gen_mol_fea.py --smiles_path $smiles_path --outdir $outdir --par_jobs $par_jobs --i2 20000
+par_jobs=1
+# python src/gen_mol_fea.py --smiles_path $smiles_path --outdir $outdir --par_jobs $par_jobs --i2 20000
+python src/gen_mol_fea.py --smiles_path $smiles_path --outdir $outdir --par_jobs $par_jobs --i2 100
