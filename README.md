@@ -13,7 +13,7 @@ Each feature in a dataframe is prefixed with an appropriate string indicating th
 - [x] ECFP6 (prefix: `ecfp6_`)
 - [x] Images
 
-These datasets are then used to generate ML dataframes for each target protein `github.com/2019-ncovgroup/ML-docking-dataframe-generator`.<br>
+These datasets are then used to generate ML dataframes for each target protein `github.com/2019-ncovgroup/ML-docking-dataframe-generator`.
 Alteratively, these feature sets can be used for inference with `github.com/brettin/ML-training-inferencing`.
 <img src="README/dsc.df.png" alt="drawing" height="220"/>
 
