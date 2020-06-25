@@ -25,22 +25,36 @@ filepath = Path(__file__).resolve().parent
 from utils.classlogger import Logger
 from utils.utils import load_data, get_print_func
 
-FEA_MAIN_DIR = Path(filepath, '../data/raw/fea-subsets-hpc')
-DRUG_SET = 'OZD'
+# Features
+FEA_DIR = Path(filepath, '../data/raw/fea-subsets-hpc')
+DRG_SET = 'OZD'
 
 def parse_args(args):
-    parser = argparse.ArgumentParser(description='Aggregate molecular feature sets.')
-    parser.add_argument('--drg_set', default=DRUG_SET, type=str,
+    parser = argparse.ArgumentParser(
+        description='Aggregate molecular feature sets.')
+
+    parser.add_argument('--drg_set',
+                        type=str,
+                        default=DRG_SET,
                         choices=['OZD', 'ORD'],
-                        help=f'Drug set (default: {DRUG_SET}).')
-    parser.add_argument('--fea_type', default=FEA_TYPE, type=str, nargs='+',
+                        help=f'Drug set (default: {DRG_SET}).')
+    parser.add_argument('--fea_type',
+                        type=str, 
+                        default=FEA_TYPE,
+                        nargs='+',
                         choices=['descriptors', 'images', 'fps'],
                         help=f'Feature type (default: descriptors).')
-    parser.add_argument('-od', '--outdir', default=None, type=str,
+    parser.add_argument('-od', '--outdir',
+                        type=str,
+                        default=None,
                         help=f'Output dir (default: None).')
-    parser.add_argument('--par_jobs', default=1, type=int, 
+    parser.add_argument('--par_jobs',
+                        type=int, 
+                        default=1,
                         help=f'Number of joblib parallel jobs (default: 1).')
-    args, other_args = parser.parse_known_args(args)
+
+    # args, other_args = parser.parse_known_args(args)
+    args = parser.parse_args( args )
     return args
 
 
@@ -51,14 +65,17 @@ def sizeof(data, verbose=True):
 
 
 def run(args):
+    # import ipdb; ipdb.set_trace()
     t0 = time()
     drg_set = args['drg_set']
     fea_type = args['fea_type']
-    par_jobs = args['par_jobs']
+
+    par_jobs = int( args['par_jobs'] )
+    assert par_jobs > 0, f"The arg 'par_jobs' must be int >1 (got {par_jobs})"
 
     outdir = Path(args['outdir'])
     if outdir is None:
-        outdir = Path(filepath, '../out', FEA_MAIN_DIR.name, drg_set).resolve()
+        outdir = Path(filepath, '../out', FEA_DIR.name, drg_set).resolve()
     os.makedirs(outdir, exist_ok=True)
     
     # Logger
@@ -73,7 +90,7 @@ def run(args):
     # --------------------------
     if 'descriptors' in fea_type:
         fea_outpath = outdir/'descriptors'
-        files_path = Path(FEA_MAIN_DIR, drg_set, 'descriptors').resolve()
+        files_path = Path(FEA_DIR, drg_set, 'descriptors').resolve()
         fea_files = sorted( files_path.glob(f'{drg_set}-*.csv') )
 
         if len(fea_files) > 0:
@@ -81,7 +98,7 @@ def run(args):
 
             fea_prfx = 'dd'
             fea_sep = '_'
-            fea_names = pd.read_csv(FEA_MAIN_DIR/'dd_fea_names.csv').columns.tolist()
+            fea_names = pd.read_csv(FEA_DIR/'dd_fea_names.csv').columns.tolist()
             fea_names = [c.strip() for c in fea_names] # clean names
             fea_names = [fea_prfx+fea_sep+str(c) for c in fea_names] # prefix fea names
             cols = ['CAT', 'TITLE', 'SMILES'] + fea_names
@@ -111,7 +128,7 @@ def run(args):
     # --------------------------
     if 'fps' in fea_type:
         fea_outpath = outdir/'fps'
-        files_path = Path(FEA_MAIN_DIR, drg_set, 'fps').resolve()
+        files_path = Path(FEA_DIR, drg_set, 'fps').resolve()
         fea_files = sorted( files_path.glob(f'{drg_set}-*.csv') )
 
         if len(fea_files) > 0:
@@ -162,7 +179,7 @@ def run(args):
     # --------------------------
     # if 'images' in fea_type:
     #     fea_outpath = outdir/'images'
-    #     files_path = Path(FEA_MAIN_DIR, drg_set, 'images').resolve()
+    #     files_path = Path(FEA_DIR, drg_set, 'images').resolve()
     #     fea_files = sorted( files_path.glob(f'{drg_set}-*.pkl') )
 
     #     if len(fea_files) > 0:

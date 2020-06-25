@@ -47,15 +47,25 @@ OUTDIR = Path(filepath, '../out').resolve()
 
 def parse_args(args):
     parser = argparse.ArgumentParser(description='Generate molecular feature sets.')
-    parser.add_argument('--smiles_path', default=SMILES_PATH, type=str,
+    parser.add_argument('--smiles_path',
+                        type=str,
+                        default=SMILES_PATH,
                         help=f'Full path to the smiles file (default: {SMILES_PATH}).')
-    parser.add_argument('-od', '--outdir', default=OUTDIR, type=str,
+    parser.add_argument('-od', '--outdir',
+                        type=str,
+                        default=OUTDIR,
                         help=f'Output dir (default: {OUTDIR}).')
-    parser.add_argument('--par_jobs', default=1, type=int, 
+    parser.add_argument('--par_jobs',
+                        type=int, 
+                        default=1,
                         help=f'Number of joblib parallel jobs (default: 1).')
-    parser.add_argument('--i1', default=0, type=int, 
+    parser.add_argument('--i1',
+                        type=int, 
+                        default=0,
                         help=f'Start index of a smiles sample (default: 0).')
-    parser.add_argument('--i2', default=None, type=int, 
+    parser.add_argument('--i2',
+                        type=int, 
+                        default=None,
                         help=f'End index of smiles sample (default: None).')
     args, other_args = parser.parse_known_args(args)
     return args
