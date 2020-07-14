@@ -70,14 +70,14 @@ def run(args):
     drg_set = args['drg_set']
     fea_type = args['fea_type']
 
-    par_jobs = int( args['par_jobs'] )
+    par_jobs = int(args['par_jobs'])
     assert par_jobs > 0, f"The arg 'par_jobs' must be int >1 (got {par_jobs})"
 
     outdir = Path(args['outdir'])
     if outdir is None:
         outdir = Path(filepath, '../out', FEA_DIR.name, drg_set).resolve()
     os.makedirs(outdir, exist_ok=True)
-    
+
     # Logger
     lg = Logger( outdir/'gen.fea.dfs.log' )
     print_fn = get_print_func( lg.logger )
@@ -89,11 +89,11 @@ def run(args):
     # Generate descriptors
     # --------------------------
     if 'descriptors' in fea_type:
-        fea_outpath = outdir/'descriptors'
         files_path = Path(FEA_DIR, drg_set, 'descriptors').resolve()
         fea_files = sorted( files_path.glob(f'{drg_set}-*.csv') )
 
         if len(fea_files) > 0:
+            fea_outpath = outdir/'descriptors'
             os.makedirs(fea_outpath, exist_ok=True)
 
             fea_prfx = 'dd'
@@ -107,7 +107,7 @@ def run(args):
             for i, f in enumerate(fea_files[:N]):
                 if (i+1) % 100 == 0:
                     print(f'Load {i+1} ... {f.name}')
-                df = pd.read_csv( Path(fea_files[i]), names=cols )
+                df = pd.read_csv( fea_files[i], names=cols )
                 dfs.append(df)
 
             ID = 'TITLE'
@@ -115,7 +115,7 @@ def run(args):
             data = data.drop_duplicates( subset=[ID] )
             data = data[ data[ID].notna() ].reset_index(drop=True)
             data[ fea_names ] = data[ fea_names ].fillna(0)
-            data = data.reset_index( drop=True )
+            data = data.reset_index(drop=True)
             print_fn('data.shape {}'.format(data.shape))
 
             # Save
@@ -127,11 +127,11 @@ def run(args):
     # Generate fingerprints
     # --------------------------
     if 'fps' in fea_type:
-        fea_outpath = outdir/'fps'
         files_path = Path(FEA_DIR, drg_set, 'fps').resolve()
         fea_files = sorted( files_path.glob(f'{drg_set}-*.csv') )
 
         if len(fea_files) > 0:
+            fea_outpath = outdir/'fps'
             os.makedirs(fea_outpath, exist_ok=True)
 
             fea_prfx = 'ecfp2'
@@ -178,11 +178,11 @@ def run(args):
     # Generate images
     # --------------------------
     # if 'images' in fea_type:
-    #     fea_outpath = outdir/'images'
     #     files_path = Path(FEA_DIR, drg_set, 'images').resolve()
     #     fea_files = sorted( files_path.glob(f'{drg_set}-*.pkl') )
 
     #     if len(fea_files) > 0:
+    #         fea_outpath = outdir/'images'
     #         os.makedirs(fea_outpath, exist_ok=True)
 
     #         dfs = []
@@ -212,8 +212,8 @@ def run(args):
     print_fn('\nRuntime {:.2f} mins'.format( (time()-t0)/60 ))
     print_fn('Done.')
     lg.kill_logger()
-    
-    
+
+
 def main(args):
     args = parse_args(args)
     args = vars(args)
