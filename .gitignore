@@ -2,7 +2,5 @@
 !.gitignore
 *__*
 
-/src/old/
-/data/
-/out/
+/*out*/
 /tmp/

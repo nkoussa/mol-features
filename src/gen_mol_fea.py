@@ -66,14 +66,14 @@ def parse_args(args):
                         type=int,
                         default=1,
                         help='Number of joblib parallel jobs (default: 1).')
-    parser.add_argument('--i1',
-                        type=int,
-                        default=0,
-                        help='Start index of a smiles sample (default: 0).')
-    parser.add_argument('--i2',
-                        type=int,
-                        default=None,
-                        help='End index of smiles sample (default: None).')
+    # parser.add_argument('--i1',
+    #                     type=int,
+    #                     default=0,
+    #                     help='Start index of a smiles sample (default: 0).')
+    # parser.add_argument('--i2',
+    #                     type=int,
+    #                     default=None,
+    #                     help='End index of smiles sample (default: None).')
     parser.add_argument('--ignore_3D',
                         action='store_true',
                         help='Ignore 3-D Mordred descriptors (default: False).')
@@ -117,31 +117,27 @@ def run(args):
 
     # --------------------------------------------
     # Load covid-19
-    # smi = pd.read_csv( smiles_path, sep='\t', names=['SMILES', 'TITLE'] )
+    # smi = pd.read_csv(smiles_path, sep='\t', names=['SMILES', 'TITLE'])
     # smi = pd.read_csv(smiles_path)
 
-    # Load nsc drugs (nci60)
+    # Load Pilot1 (either nsc drugs (nci60) or non-nsc)
     smi = pd.read_csv(smiles_path, sep='\t')
-    smi = smi.rename(columns={'NSC.ID': 'TITLE'})
-
-    # Load non-nsc drugs (other drug sensitivity sources)
-    # smi = pd.read_csv(smiles_path, sep='\t')
-    # smi = smi.rename(columns={'ID': 'TITLE'})
+    smi = smi.rename(columns={'ID': 'TITLE'})
     # --------------------------------------------
 
     smi = smi.astype({'SMILES': str, 'TITLE': str})
     smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
     smi['TITLE'] = smi['TITLE'].map(lambda x: x.strip())
-    n_smiles = smi.shape[0]
-    fea_id0 = smi.shape[1]  # this used as index where features begin
+    # n_smiles = smi.shape[0]
+    fea_id0 = smi.shape[1]  # index of the first feature
 
-    # Create gout
-    i1, i2 = args.i1, args.i2
-    ids_dir = 'smi.ids.{}-{}'.format(i1, i2)
-    if i2 is None:
-        i2 = n_smiles
-    # gout = Path(args.gout)/date/ids_dir
-    gout = Path(args.gout, ids_dir)
+    # Create Outdir
+    # i1, i2 = args.i1, args.i2
+    # ids_dir = 'smi.ids.{}-{}'.format(i1, i2)
+    # if i2 is None:
+    #     i2 = n_smiles
+    # gout = Path(args.gout, ids_dir)
+    gout = Path(args.gout)
     os.makedirs(gout, exist_ok=True)
 
     # Logger
@@ -153,19 +149,18 @@ def run(args):
     else:
         print_fn(f'\n{pformat(vars(args))}')
 
-
     print_fn('\nInput data path  {}'.format(smiles_path))
     print_fn('Output data dir  {}'.format(gout))
 
     # Duplicates
     # dup = smi[ smi.duplicated(subset=['smiles'], keep=False) ].reset_index(drop=True)
-    # print( dup['smiles'].value_counts() )
+    # print(dup['smiles'].value_counts())
 
     # Drop duplicates
     smi = drop_dup_rows(smi, print_fn)
 
     # Exract subset SMILES
-    smi = smi.iloc[i1:i2+1, :].reset_index(drop=True)
+    # smi = smi.iloc[i1:i2+1, :].reset_index(drop=True)
 
     print_fn('\nCanonicalize SMILES ...')
     can_smi_vec = canon_smiles(smi['SMILES'], par_jobs=par_jobs)
@@ -188,7 +183,8 @@ def run(args):
         images = smiles_to_images(smi, smi_col_name='SMILES', title_col_name='TITLE',
                                   molSize=(128, 128), kekulize=True, par_jobs=par_jobs)
         # print(images[0].keys())
-        img_outpath = gout/f'images.ids.{i1}-{i2}.pkl'
+        # img_outpath = gout/f'images.ids.{i1}-{i2}.pkl'
+        img_outpath = gout/'images.pkl'
 
         # Dump images to file (list of dicts)
         pickle.dump(images, open(img_outpath, 'wb'))
@@ -204,7 +200,8 @@ def run(args):
             file_format = 'parquet'
             ecfp = smiles_to_fps(smi, smi_name='SMILES', radius=radius, par_jobs=par_jobs)
             ecfp = add_fea_prfx(ecfp, prfx=f'ecfp{2*radius}.', id0=fea_id0)
-            ecfp.to_parquet( gout/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}' )
+            # ecfp.to_parquet(gout/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}')
+            ecfp.to_parquet(gout/f'ecfp{2*radius}.{file_format}')
             del ecfp
 
         gen_fps_and_save(smi, radius=1, par_jobs=par_jobs)
