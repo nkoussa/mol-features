@@ -97,9 +97,9 @@ def smiles_to_mordred(df, smi_name='SMILES', ignore_3D=True, par_jobs=8):
     # Create Mordred calculator and compute descriptors from molecules 
     # mordred-descriptor.github.io/documentation/master/_modules/mordred/_base/calculator.html#Calculator.pandas
     calc = Calculator(descriptors, ignore_3D=ignore_3D)
-    dsc = calc.pandas( mols, nproc=par_jobs, nmols=None, quiet=False, ipynb=False )
-    dsc = pd.concat([df, dsc], axis=1)
-    return dsc
+    dd = calc.pandas( mols, nproc=par_jobs, nmols=None, quiet=False, ipynb=False )
+    dd = pd.concat([df, dd], axis=1)
+    return dd
 
 # =================================================================================
 # class SMILES_TO_IMAGES():

@@ -42,7 +42,7 @@ date = ''.join( [str(i) for i in t] )
 SMILES_PATH = Path(filepath, '../sample_data/BL2.smi.sample').resolve()
 
 # Global outdir
-OUTDIR = Path(filepath, '../out').resolve()
+GOUT = Path(filepath, '../out').resolve()
 
 
 def parse_args(args):
@@ -52,10 +52,10 @@ def parse_args(args):
                         type=str,
                         default=SMILES_PATH,
                         help=f'Full path to the smiles file (default: {SMILES_PATH}).')
-    parser.add_argument('-od', '--outdir',
+    parser.add_argument('--gout',
                         type=str,
-                        default=OUTDIR,
-                        help=f'Output dir (default: {OUTDIR}).')
+                        default=GOUT,
+                        help=f'Output dir (default: {GOUT}).')
     parser.add_argument('--fea_type',
                         type=str,
                         default=['descriptors'],
@@ -74,6 +74,12 @@ def parse_args(args):
                         type=int,
                         default=None,
                         help='End index of smiles sample (default: None).')
+    parser.add_argument('--ignore_3D',
+                        action='store_true',
+                        help='Ignore 3-D Mordred descriptors (default: False).')
+    parser.add_argument('--impute',
+                        action='store_true',
+                        help='Whether to keep NA values (default: False).')
 
     args, other_args = parser.parse_known_args(args)
     return args
@@ -100,22 +106,28 @@ def get_image(mol):
 
 
 def run(args):
-    import ipdb; ipdb.set_trace(context=5)
+    # import ipdb; ipdb.set_trace(context=5)
     t0 = time()
-    smiles_path = args['smiles_path']
-    par_jobs = args['par_jobs']
-    fea_type = args['fea_type']
+    smiles_path = args.smiles_path
+    par_jobs = args.par_jobs
+    fea_type = args.fea_type
 
     print('\nLoad SMILES ...')
-    smiles_path = Path(args['smiles_path'])
+    smiles_path = Path(args.smiles_path)
 
+    # --------------------------------------------
     # Load covid-19
     # smi = pd.read_csv( smiles_path, sep='\t', names=['SMILES', 'TITLE'] )
     # smi = pd.read_csv(smiles_path)
 
-    # Load nci60
+    # Load nsc drugs (nci60)
     smi = pd.read_csv(smiles_path, sep='\t')
     smi = smi.rename(columns={'NSC.ID': 'TITLE'})
+
+    # Load non-nsc drugs (other drug sensitivity sources)
+    # smi = pd.read_csv(smiles_path, sep='\t')
+    # smi = smi.rename(columns={'ID': 'TITLE'})
+    # --------------------------------------------
 
     smi = smi.astype({'SMILES': str, 'TITLE': str})
     smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
@@ -123,23 +135,27 @@ def run(args):
     n_smiles = smi.shape[0]
     fea_id0 = smi.shape[1]  # this used as index where features begin
 
-    # Create outdir
-    i1, i2 = args['i1'], args['i2']
+    # Create gout
+    i1, i2 = args.i1, args.i2
     ids_dir = 'smi.ids.{}-{}'.format(i1, i2)
     if i2 is None:
         i2 = n_smiles
-    # outdir = Path(args['outdir'])/date/ids_dir
-    outdir = Path(args['outdir'], ids_dir)
-    os.makedirs(outdir, exist_ok=True)
+    # gout = Path(args.gout)/date/ids_dir
+    gout = Path(args.gout, ids_dir)
+    os.makedirs(gout, exist_ok=True)
 
     # Logger
-    lg = Logger(outdir/'gen.fea.dfs.log')
-    print_fn = get_print_func( lg.logger )
+    lg = Logger(gout/'gen.fea.dfs.log')
+    print_fn = get_print_func(lg.logger)
     print_fn(f'File path: {filepath}')
-    print_fn(f'\n{pformat(args)}')
+    if isinstance(vars(args), dict):
+        print_fn(f'\n{pformat(args)}')
+    else:
+        print_fn(f'\n{pformat(vars(args))}')
+
 
     print_fn('\nInput data path  {}'.format(smiles_path))
-    print_fn('Output data dir  {}'.format(outdir))
+    print_fn('Output data dir  {}'.format(gout))
 
     # Duplicates
     # dup = smi[ smi.duplicated(subset=['smiles'], keep=False) ].reset_index(drop=True)
@@ -159,7 +175,7 @@ def run(args):
     nan_ids = can_smi_vec.isna()
     bad_smi = smi[nan_ids]
     if len(bad_smi) > 0:
-        bad_smi.to_csv(outdir/'smi_canon_err.csv', index=False)
+        bad_smi.to_csv(gout/'smi_canon_err.csv', index=False)
 
     # Keep the good (canonicalized) SMILES
     smi['SMILES'] = can_smi_vec
@@ -172,7 +188,7 @@ def run(args):
         images = smiles_to_images(smi, smi_col_name='SMILES', title_col_name='TITLE',
                                   molSize=(128, 128), kekulize=True, par_jobs=par_jobs)
         # print(images[0].keys())
-        img_outpath = outdir/f'images.ids.{i1}-{i2}.pkl'
+        img_outpath = gout/f'images.ids.{i1}-{i2}.pkl'
 
         # Dump images to file (list of dicts)
         pickle.dump(images, open(img_outpath, 'wb'))
@@ -188,7 +204,7 @@ def run(args):
             file_format = 'parquet'
             ecfp = smiles_to_fps(smi, smi_name='SMILES', radius=radius, par_jobs=par_jobs)
             ecfp = add_fea_prfx(ecfp, prfx=f'ecfp{2*radius}.', id0=fea_id0)
-            ecfp.to_parquet( outdir/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}' )
+            ecfp.to_parquet( gout/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}' )
             del ecfp
 
         gen_fps_and_save(smi, radius=1, par_jobs=par_jobs)
@@ -199,7 +215,8 @@ def run(args):
     # Generate descriptors
     # --------------------
     if 'descriptors' in fea_type:
-        dd = smiles_to_mordred(smi, smi_name='SMILES', par_jobs=par_jobs)
+        dd = smiles_to_mordred(smi, smi_name='SMILES', ignore_3D=args.ignore_3D,
+                               par_jobs=par_jobs)
         dd = add_fea_prfx(dd, prfx='dd_', id0=fea_id0)
 
         # Filter NaNs (step 1)
@@ -228,18 +245,26 @@ def run(args):
         print_fn('\nCast descriptors to float ...')
         dd = dd.astype({c: np.float32 for c in dd.columns[fea_id0:]})
 
+        # Dump the count of NANs in each column
+        aa = dd.isna().sum(axis=0).reset_index()
+        aa = aa.rename(columns={'index': 'col', 0: 'count'})
+        aa = aa.sort_values('count', ascending=False).reset_index(drop=True)
+        aa.to_csv(gout/'nan_count_per_col.csv', index=False)
+
         # Impute missing values
-        print_fn('\nImpute NaNs ...')
-        print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
-        dd = dd.fillna(0.0)
-        print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
+        if args.impute:
+            print_fn('\nImpute NaNs ...')
+            print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
+            dd = dd.fillna(0.0)
+            print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
 
         # Save
         print_fn('\nSave ...')
         dd = dd.reset_index(drop=True)
         file_format = 'parquet'
-        dd.to_parquet( outdir/'dd.ids.{}-{}.{}'.format(i1, i2, file_format) )
-        # dd.to_csv( outdir/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
+        fname = 'dd.mordred.{}.{}'.format('' if args.impute else 'with.nans', file_format)
+        dd.to_parquet(gout/fname)
+        # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
 
     # ========================================================
     print_fn('\nRuntime {:.2f} mins'.format( (time()-t0)/60 ))
@@ -249,7 +274,7 @@ def run(args):
 
 def main(args):
     args = parse_args(args)
-    args = vars(args)
+    # args = vars(args)
     run(args)
 
 
