@@ -22,18 +22,18 @@ import pickle
 import numpy as np
 import pandas as pd
 
-filepath = Path(__file__).resolve().parent
-
 # Utils
 # sys.path.append( os.path.abspath(filepath/'../utils') )
 from utils.classlogger import Logger
 from utils.utils import load_data, get_print_func, drop_dup_rows, dropna
 from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps, smiles_to_images
 
+filepath = Path(__file__).resolve().parent
+
 # Date
-t = datetime.now()
-t = [t.year, '-', t.month, '-', t.day]
-date = ''.join( [str(i) for i in t] )
+# t = datetime.now()
+# t = [t.year, '-', t.month, '-', t.day]
+# date = ''.join([str(i) for i in t])
 
 # SMILES_PATH
 # SMILES_PATH = Path(filepath, '../data/raw/UC-molecules/UC.smi')
