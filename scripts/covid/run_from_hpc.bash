@@ -7,7 +7,11 @@
 # smiles_path=data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi
 drg_set=OZD
 
-outdir=out/images_and_dfs_hpc
+outdir=out.pivot/images_and_dfs_hpc
 par_jobs=32
-python src/agg_fea_hpc.py --drg_set $drg_set --outdir $outdir --par_jobs $par_jobs \
+
+python src/agg_fea_hpc.py \
+    --drg_set $drg_set \
+    --outdir $outdir \
+    --par_jobs $par_jobs \
     --fea_type descriptors fps images

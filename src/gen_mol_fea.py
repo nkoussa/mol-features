@@ -25,7 +25,7 @@ import pandas as pd
 # Utils
 # sys.path.append( os.path.abspath(filepath/'../utils') )
 from utils.classlogger import Logger
-from utils.utils import load_data, get_print_func, drop_dup_rows, dropna
+from utils.utils import get_print_func, drop_dup_rows, dropna
 from utils.smiles import canon_smiles, smiles_to_mordred, smiles_to_fps, smiles_to_images
 
 filepath = Path(__file__).resolve().parent
@@ -52,6 +52,10 @@ def parse_args(args):
                         type=str,
                         default=SMILES_PATH,
                         help=f'Full path to the smiles file (default: {SMILES_PATH}).')
+    parser.add_argument('--id_name',
+                        type=str,
+                        required=True,
+                        help=f'Column name that serves as the drug ID.')
     parser.add_argument('--gout',
                         type=str,
                         default=GOUT,
@@ -106,9 +110,10 @@ def get_image(mol):
 
 
 def run(args):
-    # import ipdb; ipdb.set_trace(context=5)
+    import ipdb; ipdb.set_trace(context=5)
     t0 = time()
     smiles_path = args.smiles_path
+    id_name = args.id_name
     par_jobs = args.par_jobs
     fea_type = args.fea_type
 
@@ -117,17 +122,21 @@ def run(args):
 
     # --------------------------------------------
     # Load covid-19
-    # smi = pd.read_csv(smiles_path, sep='\t', names=['SMILES', 'TITLE'])
+    # id_name = 'TITLE'
+    # smi = pd.read_csv(smiles_path, sep='\t', names=['SMILES', id_name])
     # smi = pd.read_csv(smiles_path)
 
     # Load Pilot1 (either nsc drugs (nci60) or non-nsc)
+    # id_name = 'ID'
+    # smi = pd.read_csv(smiles_path, sep='\t')
+    # smi = smi.rename(columns={'ID': 'TITLE'})
+
     smi = pd.read_csv(smiles_path, sep='\t')
-    smi = smi.rename(columns={'ID': 'TITLE'})
     # --------------------------------------------
 
-    smi = smi.astype({'SMILES': str, 'TITLE': str})
+    smi = smi.astype({'SMILES': str, id_name: str})
     smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
-    smi['TITLE'] = smi['TITLE'].map(lambda x: x.strip())
+    smi[id_name] = smi[id_name].map(lambda x: x.strip())
     # n_smiles = smi.shape[0]
     fea_id0 = smi.shape[1]  # index of the first feature
 
@@ -177,10 +186,10 @@ def run(args):
     smi = smi[~nan_ids].reset_index(drop=True)
 
     # ========================================================
-    # Generate imgaes
+    # Generate images
     # ---------------
     if 'images' in fea_type:
-        images = smiles_to_images(smi, smi_col_name='SMILES', title_col_name='TITLE',
+        images = smiles_to_images(smi, smi_col_name='SMILES', title_col_name=id_name,
                                   molSize=(128, 128), kekulize=True, par_jobs=par_jobs)
         # print(images[0].keys())
         # img_outpath = gout/f'images.ids.{i1}-{i2}.pkl'
@@ -197,11 +206,11 @@ def run(args):
     # ---------------------
     if 'fps' in fea_type:
         def gen_fps_and_save(smi, radius=1, par_jobs=par_jobs):
-            file_format = 'parquet'
             ecfp = smiles_to_fps(smi, smi_name='SMILES', radius=radius, par_jobs=par_jobs)
             ecfp = add_fea_prfx(ecfp, prfx=f'ecfp{2*radius}.', id0=fea_id0)
             # ecfp.to_parquet(gout/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}')
-            ecfp.to_parquet(gout/f'ecfp{2*radius}.{file_format}')
+            ecfp.to_parquet(gout/f'ecfp{2*radius}.parquet')
+            ecfp.to_csv(gout/f'ecfp{2*radius}', sep='\t', index=False)
             del ecfp
 
         gen_fps_and_save(smi, radius=1, par_jobs=par_jobs)
@@ -258,9 +267,9 @@ def run(args):
         # Save
         print_fn('\nSave ...')
         dd = dd.reset_index(drop=True)
-        file_format = 'parquet'
-        fname = 'dd.mordred.{}.{}'.format('' if args.impute else 'with.nans', file_format)
-        dd.to_parquet(gout/fname)
+        fname = 'dd.mordred.{}'.format('' if args.impute else 'with.nans')
+        dd.to_parquet(gout/(fname+'.parquet'))
+        dd.to_csv(gout/fname, sep='\t', index=False)
         # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
 
     # ========================================================
@@ -271,7 +280,6 @@ def run(args):
 
 def main(args):
     args = parse_args(args)
-    # args = vars(args)
     run(args)
 
 
