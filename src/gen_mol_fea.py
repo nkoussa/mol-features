@@ -55,7 +55,8 @@ def parse_args(args):
     parser.add_argument('--id_name',
                         type=str,
                         required=True,
-                        help=f'Column name that serves as the drug ID.')
+                        help="Column name that serves as the drug ID (we usually use\
+                        'TITLE' for covid and 'ID' for pilot1.")
     parser.add_argument('--gout',
                         type=str,
                         default=GOUT,
