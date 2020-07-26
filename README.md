@@ -2,7 +2,7 @@ Main use cases of this repo:
 1. Generate molecular features for ML models `src/gen_mol_fea.py`
 2. Aggregate molecular features generated on HPC (Theta, Frontera) `src/agg_fea_hpc.py`
 
-## Generate molecular features
+## Calculate molecular features
 `src/gen_mol_fea.py` takes SMILES, canonicalizes, and generates multiple feature sets stored in separate files.<br>
 Mordred descriptors and fingerprints are stored in dataframes (e.g., parquet, csv).<br>
 Images are stored in python dictionaries (pickle files).<br>
@@ -13,13 +13,12 @@ Each feature (column) name in a dataframe is prefixed with an appropriate string
 - [x] ECFP6 (prefix: `ecfp6_`)
 - [x] Images
 
-## Calculate features
-Clone the repo.
+First, clone the repo.
 ```shell
 $ git clone https://github.com/adpartin/mol-features/
 ```
 
-### Covid
+### If you are working on Covid
 <!--- These datasets are then used to generate ML dataframes for each target protein `github.com/2019-ncovgroup/ML-docking-dataframe-generator`.
 Alteratively, these feature sets can be used for inference with `github.com/brettin/ML-training-inferencing`.
 <img src="README/dsc.df.png" alt="drawing" height="220"/>
@@ -39,7 +38,7 @@ $ python src/gen_mol_fea.py --smiles_path data/OZD-dock-2020-06-01/OZD.May29.uni
 $ bash scripts/covid/gen_fea_OZD.bash
 ```
 
-### Pilot1 (cancer)
+### If you are working on Pilot1 (cancer)
 Clone the repo.
 ```shell
 $ git clone https://github.com/adpartin/mol-features/
