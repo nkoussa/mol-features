@@ -13,7 +13,7 @@ Each feature (column) name in a dataframe is prefixed with an appropriate string
 - [x] ECFP6 (prefix: `ecfp6_`)
 - [x] Images
 
-## Getting started
+## Calculate features
 Clone the repo.
 ```shell
 $ git clone https://github.com/adpartin/mol-features/
