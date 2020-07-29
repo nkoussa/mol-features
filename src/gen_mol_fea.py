@@ -118,22 +118,9 @@ def run(args):
     par_jobs = args.par_jobs
     fea_type = args.fea_type
 
-    print('\nLoad SMILES ...')
+    print('\nLoad SMILES.')
     smiles_path = Path(args.smiles_path)
-
-    # --------------------------------------------
-    # Load covid-19
-    # id_name = 'TITLE'
-    # smi = pd.read_csv(smiles_path, sep='\t', names=['SMILES', id_name])
-    # smi = pd.read_csv(smiles_path)
-
-    # Load Pilot1 (either nsc drugs (nci60) or non-nsc)
-    # id_name = 'ID'
-    # smi = pd.read_csv(smiles_path, sep='\t')
-    # smi = smi.rename(columns={'ID': 'TITLE'})
-
     smi = pd.read_csv(smiles_path, sep='\t')
-    # --------------------------------------------
 
     smi = smi.astype({'SMILES': str, id_name: str})
     smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
@@ -172,7 +159,7 @@ def run(args):
     # Exract subset SMILES
     # smi = smi.iloc[i1:i2+1, :].reset_index(drop=True)
 
-    print_fn('\nCanonicalize SMILES ...')
+    print_fn('\nCanonicalize SMILES.')
     can_smi_vec = canon_smiles(smi['SMILES'], par_jobs=par_jobs)
     can_smi_vec = pd.Series(can_smi_vec)
 
@@ -228,7 +215,7 @@ def run(args):
 
         # Filter NaNs (step 1)
         # Drop rows where all values are NaNs
-        print_fn('\nDrop rows where all values are NaN ...')
+        print_fn('\nDrop rows where all values are NaN.')
         print_fn('Shape: {}'.format(dd.shape))
         idx = ( dd.isna().sum(axis=1) == dd.shape[1] ).values
         dd = dd.iloc[~idx, :].reset_index(drop=True)
@@ -238,14 +225,14 @@ def run(args):
         print_fn('Shape: {}'.format(dd.shape))
 
         # Filter NaNs (step 2)
-        # Drop rows and cols based on a thershold of NaN values
+        # Drop rows based on a thershold of NaN values.
         # print(dd.isna().sum(axis=1).sort_values(ascending=False))
         # p=dd.isna().sum(axis=1).sort_values(ascending=False).hist(bins=100);
         th = 0.2
         print_fn('\nDrop rows with at least {} NaNs (at least {} out of {}).'.format(
             th, int(th * dd.shape[1]), dd.shape[1]))
         print_fn('Shape: {}'.format(dd.shape))
-        dd = dropna(dd, axis=1, th=th)
+        dd = dropna(dd, axis=0, th=th)
         print_fn('Shape: {}'.format(dd.shape))
 
         # Cast features (descriptors)
@@ -260,13 +247,13 @@ def run(args):
 
         # Impute missing values
         if args.impute:
-            print_fn('\nImpute NaNs ...')
+            print_fn('\nImpute NaNs.')
             print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
             dd = dd.fillna(0.0)
             print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
 
         # Save
-        print_fn('\nSave ...')
+        print_fn('\nSave.')
         dd = dd.reset_index(drop=True)
         fname = 'dd.mordred.{}'.format('' if args.impute else 'with.nans')
         dd.to_parquet(gout/(fname+'.parquet'))
@@ -274,7 +261,7 @@ def run(args):
         # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
 
     # ========================================================
-    print_fn('\nRuntime {:.2f} mins'.format( (time()-t0)/60 ))
+    print_fn('\nRuntime {:.1f} mins'.format((time()-t0)/60))
     print_fn('Done.')
     lg.kill_logger()
 

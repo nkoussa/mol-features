@@ -53,20 +53,31 @@ def drop_dup_rows(data, print_fn=print):
     return data
 
 
-def dropna(df, axis=0, th=0.4):
-    """ Drop rows or cols based on the ratio of NA values along the axis.
-    Args:
-        th (float) : if the ratio of NA values along the axis is larger that th, then drop the item
-        axis (int) : 0 to drop rows; 1 to drop cols
+def dropna(df, axis: int=0, th: float=0.05, max_na: int=None):
     """
-    assert (axis in [0,1]), 'Invalid value for axis'
-    if axis==0:
+    Drop rows (axis=0) or cols (axis=1) based on the ratio of NA values
+    along the axis. Instead of ratio, you can also specify the max number
+    of NA.
+    Args:
+        th (float): if ratio of NA values along the axis is larger that th,
+                     then drop all the values
+        max_na (int): specify max allowable number of na (instead of
+                       specifying the ratio)
+        axis (int): 0 to drop rows; 1 to drop cols
+    """
+    assert (axis in [0, 1]), "Invalid value for arg 'axis'."
+    axis = 0 if (axis == 1) else 1
+
+    if max_na is not None:
+        assert max_na >= 0, 'max_na must be >=0.'
+        idx = df.isna().sum(axis=axis) <= max_na
+    else:
         idx = df.isna().sum(axis=axis)/df.shape[axis] <= th
+
+    if axis == 0:
         df = df.iloc[:, idx.values]
-    elif axis==1:
-        idx = df.isna().sum(axis=axis)/df.shape[axis] <= th
+    else:
         df = df.iloc[idx.values, :].reset_index(drop=True)
-    df = df.reset_index(drop=True)
     return df
 
 
