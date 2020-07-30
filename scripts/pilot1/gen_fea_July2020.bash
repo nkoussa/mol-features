@@ -21,14 +21,14 @@ python src/gen_mol_fea.py \
 
 # -------------------------------------------------------
 # NSC drugs (NCI60): 52642 smiles
-# dname=July2020/NCI60_drugs_52k_smiles
-# gout=out.pilot1/$dname
-# smiles_path=data/$dname
+dname=July2020/NCI60_drugs_52k_smiles
+gout=out.pilot1/$dname
+smiles_path=data/$dname
 
-# python src/gen_mol_fea.py \
-#     --smiles_path $smiles_path \
-#     --id_name ID \
-#     --gout $gout \
-#     --par_jobs $par_jobs \
-#     --ignore_3D \
-#     --fea_type $fea_type
+python src/gen_mol_fea.py \
+    --smiles_path $smiles_path \
+    --id_name ID \
+    --gout $gout \
+    --par_jobs $par_jobs \
+    --ignore_3D \
+    --fea_type $fea_type

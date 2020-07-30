@@ -86,7 +86,7 @@ def parse_args(args):
                         action='store_true',
                         help='Whether to keep NA values (default: False).')
 
-    args, other_args = parser.parse_known_args(args)
+    args = parser.parse_args(args)
     return args
 
 
@@ -141,10 +141,7 @@ def run(args):
     lg = Logger(gout/'gen.fea.dfs.log')
     print_fn = get_print_func(lg.logger)
     print_fn(f'File path: {filepath}')
-    if isinstance(vars(args), dict):
-        print_fn(f'\n{pformat(args)}')
-    else:
-        print_fn(f'\n{pformat(vars(args))}')
+    print_fn(f'\n{pformat(vars(args))}')
 
     print_fn('\nInput data path  {}'.format(smiles_path))
     print_fn('Output data dir  {}'.format(gout))
@@ -236,7 +233,7 @@ def run(args):
         print_fn('Shape: {}'.format(dd.shape))
 
         # Cast features (descriptors)
-        print_fn('\nCast descriptors to float ...')
+        print_fn('\nCast descriptors to float.')
         dd = dd.astype({c: np.float32 for c in dd.columns[fea_id0:]})
 
         # Dump the count of NANs in each column
@@ -256,11 +253,11 @@ def run(args):
         print_fn('\nSave.')
         dd = dd.reset_index(drop=True)
         fname = 'dd.mordred.{}'.format('' if args.impute else 'with.nans')
-        dd.to_parquet(gout/(fname+'.parquet'))
+        dd.to_parquet(gout/(fname + '.parquet'))
         dd.to_csv(gout/fname, sep='\t', index=False)
         # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
 
-    # ========================================================
+    # ======================================================
     print_fn('\nRuntime {:.1f} mins'.format((time()-t0)/60))
     print_fn('Done.')
     lg.kill_logger()
