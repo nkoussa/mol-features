@@ -1,17 +1,26 @@
 #!/bin/bash
 
+# Example:
+# bash scripts/run_from_hpc.bash 
+
 # That's the general workflow to generate molecular features for a relatively
 # small set of smiles strings. For the larger set of smiles we use HPC (Kyle
 # usually generates those with this repo github.com/globus-labs/covid-analyses).
 
-# smiles_path=data/raw/Baseline-Screen-Datasets/BL2-current/BL2.smi
-drg_set=OZD
+# DRG_SET=OZD
+DRG_SET=ORD
 
-outdir=out.pivot/images_and_dfs_hpc
-par_jobs=32
+# FEA_TYPE="descriptors fps images"
+# FEA_TYPE="descriptors fps"
+FEA_TYPE="descriptors"
+# FEA_TYPE="fps"
 
+OUTDIR=out/fea_hpc/$DRG_SET
+JOBS=32
+
+echo "Generate dataframes."
 python src/agg_fea_hpc.py \
-    --drg_set $drg_set \
-    --outdir $outdir \
-    --par_jobs $par_jobs \
-    --fea_type descriptors fps images
+    --drg_set $DRG_SET \
+    --outdir $OUTDIR \
+    --par_jobs $JOBS \
+    --fea_type $FEA_TYPE

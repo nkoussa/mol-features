@@ -154,10 +154,7 @@ def run(args):
     lg = Logger(gout/'gen.fea.dfs.log')
     print_fn = get_print_func(lg.logger)
     print_fn(f'File path: {filepath}')
-    if isinstance(vars(args), dict):
-        print_fn(f'\n{pformat(args)}')
-    else:
-        print_fn(f'\n{pformat(vars(args))}')
+    print_fn(f'\n{pformat(vars(args))}')
 
     print_fn('\nInput data path  {}'.format(smiles_path))
     print_fn('Output data dir  {}'.format(gout))
@@ -172,7 +169,7 @@ def run(args):
     # Exract subset SMILES
     # smi = smi.iloc[i1:i2+1, :].reset_index(drop=True)
 
-    print_fn('\nCanonicalize SMILES ...')
+    print_fn('\nCanonicalize SMILES.')
     can_smi_vec = canon_smiles(smi['SMILES'], par_jobs=par_jobs)
     can_smi_vec = pd.Series(can_smi_vec)
 
@@ -207,7 +204,8 @@ def run(args):
     # ---------------------
     if 'fps' in fea_type:
         def gen_fps_and_save(smi, radius=1, par_jobs=par_jobs):
-            ecfp = smiles_to_fps(smi, smi_name='SMILES', radius=radius, par_jobs=par_jobs)
+            ecfp = smiles_to_fps(smi, smi_name='SMILES', radius=radius,
+                                 par_jobs=par_jobs)
             ecfp = add_fea_prfx(ecfp, prfx=f'ecfp{2*radius}.', id0=fea_id0)
             # ecfp.to_parquet(gout/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}')
             ecfp.to_parquet(gout/f'ecfp{2*radius}.parquet')
@@ -222,7 +220,8 @@ def run(args):
     # Generate descriptors
     # --------------------
     if 'descriptors' in fea_type:
-        dd = smiles_to_mordred(smi, smi_name='SMILES', ignore_3D=args.ignore_3D,
+        dd = smiles_to_mordred(smi, smi_name='SMILES',
+                               ignore_3D=args.ignore_3D,
                                par_jobs=par_jobs)
         dd = add_fea_prfx(dd, prfx='dd_', id0=fea_id0)
 
@@ -249,7 +248,7 @@ def run(args):
         print_fn('Shape: {}'.format(dd.shape))
 
         # Cast features (descriptors)
-        print_fn('\nCast descriptors to float ...')
+        print_fn('\nCast descriptors to float.')
         dd = dd.astype({c: np.float32 for c in dd.columns[fea_id0:]})
 
         # Dump the count of NANs in each column
@@ -260,17 +259,17 @@ def run(args):
 
         # Impute missing values
         if args.impute:
-            print_fn('\nImpute NaNs ...')
+            print_fn('\nImpute NaNs.')
             print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
             dd = dd.fillna(0.0)
             print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
 
         # Save
-        print_fn('\nSave ...')
+        print_fn('\nSave.')
         dd = dd.reset_index(drop=True)
         fname = 'dd.mordred.{}'.format('' if args.impute else 'with.nans')
         dd.to_parquet(gout/(fname+'.parquet'))
-        dd.to_csv(gout/fname, sep='\t', index=False)
+        dd.to_csv(gout/(fname+'.csv'), sep='\t', index=False)
         # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
 
     # ========================================================

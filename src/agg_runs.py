@@ -37,25 +37,25 @@ def parse_args(args):
 
 
 def run(args):
-    res_dir = Path( args['res_dir'] ).resolve()
+    res_dir = Path( args['res_dir']).resolve()
     fea_name = args['fea']
     prfx = args['prfx']
     
-    run_dirs = glob( str(res_dir/'*ids*') )
+    run_dirs = glob(str(res_dir/'*ids*'))
     fea_dfs = []
     for i, r in enumerate(run_dirs):
         dpath = sorted(Path(r).glob(f'*{fea_name}*'))[0]
         if not dpath.exists():
             continue
-        df = load_data( dpath )
+        df = load_data(dpath)
 
         if 'smiles' in df.columns:
             df = df.rename(columns={'smiles': 'SMILES'})
         if 'name' in df.columns:
             df = df.rename(columns={'name': 'TITLE'})
 
-        fea_dfs.append( df )
-    fea_df = pd.concat( fea_dfs, axis=0 )
+        fea_dfs.append(df)
+    fea_df = pd.concat(fea_dfs, axis=0)
     del fea_dfs
 
     print(fea_df.shape)
