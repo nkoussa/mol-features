@@ -63,10 +63,14 @@ def parse_args(args):
                         help=f'Output dir (default: {GOUT}).')
     parser.add_argument('--fea_type',
                         type=str,
-                        default=['descriptors'],
+                        default=['mordred'],
                         nargs='+',
-                        choices=['descriptors', 'images', 'fps'],
+                        choices=['mordred', 'images', 'fps'],
                         help='Feature type (default: descriptors).')
+    parser.add_argument('--nbits',
+                        type=int,
+                        default=2024,
+                        help='Number of bits in Morgan (circular) fingerprints (default: 2024).')
     parser.add_argument('--par_jobs',
                         type=int,
                         default=1,
@@ -115,12 +119,17 @@ def run(args):
     t0 = time()
     smiles_path = args.smiles_path
     id_name = args.id_name
+    nbits = args.nbits
     par_jobs = args.par_jobs
     fea_type = args.fea_type
 
     print('\nLoad SMILES.')
     smiles_path = Path(args.smiles_path)
     smi = pd.read_csv(smiles_path, sep='\t')
+
+    new_id_name = "DrugID"  # rename column drug id_name
+    smi = smi.rename(columns={id_name: new_id_name})
+    id_name = new_id_name
 
     smi = smi.astype({'SMILES': str, id_name: str})
     smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
@@ -190,27 +199,28 @@ def run(args):
     # Generate fingerprints
     # ---------------------
     if 'fps' in fea_type:
-        def gen_fps_and_save(smi, radius=1, par_jobs=par_jobs):
+        def gen_fps_and_save(smi, radius=1, nbits=2048, par_jobs=par_jobs):
             ecfp = smiles_to_fps(smi, smi_name='SMILES', radius=radius,
-                                 par_jobs=par_jobs)
+                                 nbits=nbits, par_jobs=par_jobs)
             ecfp = add_fea_prfx(ecfp, prfx=f'ecfp{2*radius}.', id0=fea_id0)
             # ecfp.to_parquet(gout/f'ecfp{2*radius}.ids.{i1}-{i2}.{file_format}')
-            ecfp.to_parquet(gout/f'ecfp{2*radius}.parquet')
-            ecfp.to_csv(gout/f'ecfp{2*radius}', sep='\t', index=False)
+            ecfp.to_parquet(gout/f'ecfp{2*radius}_nbits{nbits}.parquet')
+            ecfp.to_csv(gout/f'ecfp{2*radius}_nbits{nbits}', sep='\t', index=False)
             del ecfp
 
-        gen_fps_and_save(smi, radius=1, par_jobs=par_jobs)
-        gen_fps_and_save(smi, radius=2, par_jobs=par_jobs)
-        gen_fps_and_save(smi, radius=3, par_jobs=par_jobs)
+        gen_fps_and_save(smi, radius=1, nbits=nbits, par_jobs=par_jobs)
+        gen_fps_and_save(smi, radius=2, nbits=nbits, par_jobs=par_jobs)
+        gen_fps_and_save(smi, radius=3, nbits=nbits, par_jobs=par_jobs)
 
     # ========================================================
-    # Generate descriptors
-    # --------------------
-    if 'descriptors' in fea_type:
+    # Generate Mordred
+    # ----------------
+    if 'mordred' in fea_type:
         dd = smiles_to_mordred(smi, smi_name='SMILES',
                                ignore_3D=args.ignore_3D,
                                par_jobs=par_jobs)
-        dd = add_fea_prfx(dd, prfx='dd_', id0=fea_id0)
+        # dd = add_fea_prfx(dd, prfx='dd_', id0=fea_id0)
+        dd = add_fea_prfx(dd, prfx='mordred_', id0=fea_id0)
 
         # Filter NaNs (step 1)
         # Drop rows where all values are NaNs
@@ -227,7 +237,7 @@ def run(args):
         # Drop rows based on a thershold of NaN values.
         # print(dd.isna().sum(axis=1).sort_values(ascending=False))
         # p=dd.isna().sum(axis=1).sort_values(ascending=False).hist(bins=100);
-        th = 0.2
+        th = 0.25
         print_fn('\nDrop rows with at least {} NaNs (at least {} out of {}).'.format(
             th, int(th * dd.shape[1]), dd.shape[1]))
         print_fn('Shape: {}'.format(dd.shape))
@@ -244,17 +254,32 @@ def run(args):
         aa = aa.sort_values('count', ascending=False).reset_index(drop=True)
         aa.to_csv(gout/'nan_count_per_col.csv', index=False)
 
-        # Impute missing values
-        if args.impute:
-            print_fn('\nImpute NaNs.')
-            print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
-            dd = dd.fillna(0.0)
-            print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
+        # # Impute missing values
+        # if args.impute:
+        #     print_fn('\nImpute NaNs.')
+        #     print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
+        #     dd.iloc[:, fea_id0:] = dd.iloc[:, fea_id0:].fillna(0.0)
+        #     print_fn('Total NaNs: {}'.format( dd.isna().values.flatten().sum() ))
+
+        dd = dd.reset_index(drop=True)
 
         # Save
-        print_fn('\nSave.')
-        dd = dd.reset_index(drop=True)
-        fname = 'dd.mordred.{}'.format('' if args.impute else 'with.nans')
+        # fname = 'dd.mordred.{}'.format('' if args.impute else 'with.nans')
+        print_fn('\nSave mordred with nans.')
+        fname = 'dd.mordred.with.nans'
+        dd.to_parquet(gout/(fname+'.parquet'))
+        dd.to_csv(gout/(fname+'.csv'), sep='\t', index=False)
+        # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
+
+        # Impute missing values
+        print_fn('\nImpute NaNs.')
+        print_fn('Total NaNs: {}'.format( dd.iloc[:, fea_id0:].isna().values.flatten().sum() ))
+        dd.iloc[:, fea_id0:] = dd.iloc[:, fea_id0:].fillna(0.0)
+        print_fn('Total NaNs: {}'.format( dd.iloc[:, fea_id0:].isna().values.flatten().sum() ))
+
+        # Save
+        print_fn('\nSave mordred with nans imputed.')
+        fname = 'dd.mordred'
         dd.to_parquet(gout/(fname+'.parquet'))
         dd.to_csv(gout/(fname+'.csv'), sep='\t', index=False)
         # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
