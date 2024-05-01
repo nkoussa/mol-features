@@ -115,7 +115,6 @@ def get_image(mol):
 
 
 def run(args):
-    import ipdb; ipdb.set_trace(context=5)
     t0 = time()
     smiles_path = args.smiles_path
     id_name = args.id_name
@@ -125,17 +124,28 @@ def run(args):
 
     print('\nLoad SMILES.')
     smiles_path = Path(args.smiles_path)
-    smi = pd.read_csv(smiles_path, sep='\t')
+    if "drugbank" in smiles_path:
+        smi = pd.read_csv(smiles_path, sep='\t', usecols=[0])  # drugbank all
+    else:
+        smi = pd.read_csv(smiles_path, sep='\t')
+
 
     new_id_name = "DrugID"  # rename column drug id_name
     smi = smi.rename(columns={id_name: new_id_name})
     id_name = new_id_name
 
-    smi = smi.astype({'SMILES': str, id_name: str})
-    smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
-    smi[id_name] = smi[id_name].map(lambda x: x.strip())
-    # n_smiles = smi.shape[0]
-    fea_id0 = smi.shape[1]  # index of the first feature
+    if "drugbank" in smiles_path:
+        # for TOM's drugbank-all.smi file!!
+        smi = smi.astype({'SMILES': str})
+        smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
+        smi['SMILES'] = smi['SMILES'].map(lambda x: x.split()[0])
+        fea_id0 = smi.shape[1]  # index of the first feature
+    else:
+        smi = smi.astype({'SMILES': str, id_name: str})
+        smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
+        smi[id_name] = smi[id_name].map(lambda x: x.strip())
+        # n_smiles = smi.shape[0]
+        fea_id0 = smi.shape[1]  # index of the first feature
 
     # Create Outdir
     # i1, i2 = args.i1, args.i2
@@ -219,8 +229,9 @@ def run(args):
         dd = smiles_to_mordred(smi, smi_name='SMILES',
                                ignore_3D=args.ignore_3D,
                                par_jobs=par_jobs)
-        # dd = add_fea_prfx(dd, prfx='dd_', id0=fea_id0)
-        dd = add_fea_prfx(dd, prfx='mordred_', id0=fea_id0)
+        fea_sep = '.'
+        # dd = add_fea_prfx(dd, prfx=f'dd{fea_sep}', id0=fea_id0)
+        dd = add_fea_prfx(dd, prfx=f'mordred{fea_sep}', id0=fea_id0)
 
         # Filter NaNs (step 1)
         # Drop rows where all values are NaNs
