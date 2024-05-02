@@ -124,10 +124,12 @@ def run(args):
 
     print('\nLoad SMILES.')
     smiles_path = Path(args.smiles_path)
-    if "drugbank" in smiles_path:
-        smi = pd.read_csv(smiles_path, sep='\t', usecols=[0])  # drugbank all
-    else:
-        smi = pd.read_csv(smiles_path, sep='\t')
+    # ERROR: TypeError: argument of type 'PosixPath' is not iterable
+    # if "drugbank" in smiles_path:
+    #     smi = pd.read_csv(smiles_path, sep='\t', usecols=[0])  # drugbank all
+    # else:
+    #     smi = pd.read_csv(smiles_path, sep='\t')
+    smi = pd.read_csv(smiles_path, sep='\t')
 
 
     new_id_name = "DrugID"  # rename column drug id_name
