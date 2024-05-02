@@ -136,18 +136,23 @@ def run(args):
     smi = smi.rename(columns={id_name: new_id_name})
     id_name = new_id_name
 
-    if "drugbank" in smiles_path:
-        # for TOM's drugbank-all.smi file!!
-        smi = smi.astype({'SMILES': str})
-        smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
-        smi['SMILES'] = smi['SMILES'].map(lambda x: x.split()[0])
-        fea_id0 = smi.shape[1]  # index of the first feature
-    else:
-        smi = smi.astype({'SMILES': str, id_name: str})
-        smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
-        smi[id_name] = smi[id_name].map(lambda x: x.strip())
-        # n_smiles = smi.shape[0]
-        fea_id0 = smi.shape[1]  # index of the first feature
+    # if "drugbank" in smiles_path:
+    #     # for TOM's drugbank-all.smi file!!
+    #     smi = smi.astype({'SMILES': str})
+    #     smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
+    #     smi['SMILES'] = smi['SMILES'].map(lambda x: x.split()[0])
+    #     fea_id0 = smi.shape[1]  # index of the first feature
+    # else:
+    #     smi = smi.astype({'SMILES': str, id_name: str})
+    #     smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
+    #     smi[id_name] = smi[id_name].map(lambda x: x.strip())
+    #     # n_smiles = smi.shape[0]
+    #     fea_id0 = smi.shape[1]  # index of the first feature
+
+    smi = smi.astype({'SMILES': str, id_name: str})
+    smi['SMILES'] = smi['SMILES'].map(lambda x: x.strip())
+    smi[id_name] = smi[id_name].map(lambda x: x.strip())
+    fea_id0 = smi.shape[1]  # index of the first feature
 
     # Create Outdir
     # i1, i2 = args.i1, args.i2
