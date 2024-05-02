@@ -65,7 +65,7 @@ def parse_args(args):
                         type=str,
                         default=['mordred'],
                         nargs='+',
-                        choices=['mordred', 'images', 'fps'],
+                        choices=['mordred', 'images', 'fps', 'canon_smi'],
                         help='Feature type (default: descriptors).')
     parser.add_argument('--nbits',
                         type=int,
@@ -190,6 +190,13 @@ def run(args):
     smi = smi[~nan_ids].reset_index(drop=True)
 
     # ========================================================
+    # Save canonical smiles
+    # ---------------
+    if 'canon_smi' in fea_type:
+        fname = "smiles_canonical"
+        smi.to_csv(gout/(fname+'.tsv'), sep='\t', index=False)
+
+    # ========================================================
     # Generate images
     # ---------------
     if 'images' in fea_type:
@@ -279,7 +286,7 @@ def run(args):
         print_fn('\nSave mordred with nans.')
         fname = 'dd.mordred.with.nans'
         dd.to_parquet(gout/(fname+'.parquet'))
-        dd.to_csv(gout/(fname+'.csv'), sep='\t', index=False)
+        dd.to_csv(gout/(fname+'.tsv'), sep='\t', index=False)
         # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
 
         # Impute missing values
@@ -292,7 +299,7 @@ def run(args):
         print_fn('\nSave mordred with nans imputed.')
         fname = 'dd.mordred'
         dd.to_parquet(gout/(fname+'.parquet'))
-        dd.to_csv(gout/(fname+'.csv'), sep='\t', index=False)
+        dd.to_csv(gout/(fname+'.tsv'), sep='\t', index=False)
         # dd.to_csv( gout/'dd.ids.{}-{}.{}'.format(i1, i2, file_format), index=False )
 
     # ======================================================
