@@ -65,7 +65,7 @@ def parse_args(args):
                         type=str,
                         default=['mordred'],
                         nargs='+',
-                        choices=['mordred', 'images', 'fps', 'canon_smi'],
+                        choices=['mordred', 'images', 'fps', 'canon_smi', 'infomax'],
                         help='Feature type (default: descriptors).')
     parser.add_argument('--nbits',
                         type=int,
@@ -202,6 +202,69 @@ def run(args):
     if 'canon_smi' in fea_type:
         fname = "smiles_canonical"
         smi.to_csv(gout/(fname+'.tsv'), sep='\t', index=False)
+
+    # ========================================================
+    # Generate infomax fingerprints (see: https://github.com/NetPharMedGroup/publication_fingerprint)
+    # ---------------
+    if 'infomax' in fea_type:
+         import torch
+        from torch.utils.data import DataLoader
+        torch.utils.data.datapipes.utils.common.DILL_AVAILABLE = torch.utils._import_utils.dill_available()
+        import dgl
+        from dgl.nn.pytorch.glob import AvgPooling
+        from dgllife.model import load_pretrained
+        from dgllife.utils import mol_to_bigraph, PretrainAtomFeaturizer, PretrainBondFeaturizer
+        from rdkit import Chem
+
+        # load pretrained model
+        model = load_pretrained('gin_supervised_infomax') # contextpred infomax edgepred masking
+        model.to('cpu')
+        model.eval()
+    
+        b_res = smi["SMILES"].tolist()
+        graphs = []
+        for smi in b_res:
+            #print(smi)
+            try:
+                mol = Chem.MolFromSmiles(smi)
+                if mol is None:
+                    continue
+                g = mol_to_bigraph(mol, add_self_loop=True,
+                                node_featurizer=PretrainAtomFeaturizer(),
+                                edge_featurizer=PretrainBondFeaturizer(),
+                                canonical_atom_order=True)
+                graphs.append(g)
+
+            except:
+                continue
+
+        def collate(gs):
+            return dgl.batch(gs)
+
+        data_loader = DataLoader(graphs, batch_size=256, collate_fn=collate, shuffle=False)
+
+        readout = AvgPooling()
+
+
+        mol_emb = []
+        for batch_id, bg in enumerate(data_loader):
+            bg = bg.to('cpu')
+            nfeats = [bg.ndata.pop('atomic_number').to('cpu'),
+                    bg.ndata.pop('chirality_type').to('cpu')]
+            efeats = [bg.edata.pop('bond_type').to('cpu'),
+                    bg.edata.pop('bond_direction_type').to('cpu')]
+            with torch.no_grad():
+                node_repr = model(bg, nfeats, efeats)
+            mol_emb.append(readout(bg, node_repr))
+        mol_emb = torch.cat(mol_emb, dim=0).detach().cpu().numpy()
+
+
+        infomax_df = pd.concat([smi, pd.DataFrame(mol_emb)], axis=1)
+    
+        fname = "infomax_fingerprints"
+        infomax_df.to_csv(gout/(fname+'.tsv'), sep='\t', index=False)
+
+
 
     # ========================================================
     # Generate images
