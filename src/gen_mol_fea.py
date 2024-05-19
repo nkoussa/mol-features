@@ -207,7 +207,7 @@ def run(args):
     # Generate infomax fingerprints (see: https://github.com/NetPharMedGroup/publication_fingerprint)
     # ---------------
     if 'infomax' in fea_type:
-         import torch
+        import torch
         from torch.utils.data import DataLoader
         torch.utils.data.datapipes.utils.common.DILL_AVAILABLE = torch.utils._import_utils.dill_available()
         import dgl
