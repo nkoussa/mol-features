@@ -209,7 +209,6 @@ def run(args):
     if 'infomax' in fea_type:
         import torch
         from torch.utils.data import DataLoader
-        torch.utils.data.datapipes.utils.common.DILL_AVAILABLE = torch.utils._import_utils.dill_available()
         import dgl
         from dgl.nn.pytorch.glob import AvgPooling
         from dgllife.model import load_pretrained
