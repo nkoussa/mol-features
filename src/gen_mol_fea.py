@@ -222,10 +222,10 @@ def run(args):
     
         b_res = smi["SMILES"].tolist()
         graphs = []
-        for smi in b_res:
+        for smile in b_res:
             #print(smi)
             try:
-                mol = Chem.MolFromSmiles(smi)
+                mol = Chem.MolFromSmiles(smile)
                 if mol is None:
                     continue
                 g = mol_to_bigraph(mol, add_self_loop=True,
